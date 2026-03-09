@@ -10,4 +10,6 @@ sealed interface Routes : NavKey {
 
     @Serializable
     data object OnBoarding : Routes
+    @Serializable
+    data object SetCategoryBudget : Routes
 }
