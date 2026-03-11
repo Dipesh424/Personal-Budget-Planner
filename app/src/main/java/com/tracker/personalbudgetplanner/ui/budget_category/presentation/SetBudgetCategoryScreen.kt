@@ -1,4 +1,4 @@
-package com.tracker.personalbudgetplanner.features.budget_category
+package com.tracker.personalbudgetplanner.ui.budget_category.presentation
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -25,12 +25,26 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.filled.Checkroom
+import androidx.compose.material.icons.filled.ChildCare
 import androidx.compose.material.icons.filled.ConfirmationNumber
+import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Flight
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.LocalCafe
+import androidx.compose.material.icons.filled.LocalGroceryStore
 import androidx.compose.material.icons.filled.MedicalServices
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.SelfImprovement
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.ShoppingBag
+import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
@@ -65,12 +79,31 @@ fun SetBudgetCategoryScreen(
 ) {
     val categories = remember {
         mutableStateListOf(
-            CategoryItem("Food & Drinks", Icons.Default.Restaurant, "0"),
+            // --- Essentials ---
+            CategoryItem("Groceries", Icons.Default.LocalGroceryStore, "0"),
             CategoryItem("Rent & Housing", Icons.Default.Home, "0"),
+            CategoryItem("Utilities", Icons.Default.Lightbulb, "0"),
             CategoryItem("Transport", Icons.Default.DirectionsCar, "0"),
+
+            // --- Family & Personal ---
+            CategoryItem("Baby Care", Icons.Default.ChildCare, "0"),
+            CategoryItem("Clothing", Icons.Default.Checkroom, "0"),
+            CategoryItem("Health", Icons.Default.MedicalServices, "0"),
+            CategoryItem("Personal Care", Icons.Default.SelfImprovement, "0"),
+
+            // --- Food & Lifestyle ---
+            CategoryItem("Dining Out", Icons.Default.LocalCafe, "0"),
             CategoryItem("Shopping", Icons.Default.ShoppingBag, "0"),
             CategoryItem("Entertainment", Icons.Default.ConfirmationNumber, "0"),
-            CategoryItem("Health", Icons.Default.MedicalServices, "0")
+
+            // --- Finance & Future ---
+            CategoryItem("Investments", Icons.AutoMirrored.Filled.TrendingUp, "0"),
+            CategoryItem("Education", Icons.Default.School, "0"),
+            CategoryItem("Insurance", Icons.Default.Shield, "0"),
+
+            // --- Others ---
+            CategoryItem("Gifts & Charity", Icons.Default.Favorite, "0"),
+            CategoryItem("Miscellaneous", Icons.Default.MoreHoriz, "0")
         )
     }
 

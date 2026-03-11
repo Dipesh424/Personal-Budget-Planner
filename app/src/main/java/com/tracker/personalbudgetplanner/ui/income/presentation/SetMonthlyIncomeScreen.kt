@@ -1,4 +1,4 @@
-package com.tracker.personalbudgetplanner.features.income.presentation
+package com.tracker.personalbudgetplanner.ui.income.presentation
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -92,7 +92,7 @@ fun IncomeSetupScreen(
             ) {
                 Column {
                     Text(
-                        text = stringResource(R.string.fuel_your_journey),
+                        text = "Plan with purpose",
                         style = MaterialTheme.typography.displaySmall.copy(
                             fontWeight = FontWeight.Black, // Heavier weight for premium look
                             letterSpacing = (-1.5).sp

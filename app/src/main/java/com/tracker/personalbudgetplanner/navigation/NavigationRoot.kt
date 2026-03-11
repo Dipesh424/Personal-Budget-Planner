@@ -10,9 +10,9 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import com.tracker.personalbudgetplanner.features.budget_category.SetBudgetCategoryScreen
-import com.tracker.personalbudgetplanner.features.income.presentation.IncomeSetupScreen
-import com.tracker.personalbudgetplanner.features.welcome.presentation.WelcomeScreen
+import com.tracker.personalbudgetplanner.ui.budget_category.presentation.SetBudgetCategoryScreen
+import com.tracker.personalbudgetplanner.ui.income.presentation.IncomeSetupScreen
+import com.tracker.personalbudgetplanner.ui.welcome.presentation.WelcomeScreen
 
 @Composable
 fun NavigationRoot() {
