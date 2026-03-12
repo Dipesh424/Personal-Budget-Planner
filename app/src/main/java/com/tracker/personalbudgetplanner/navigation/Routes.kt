@@ -14,5 +14,5 @@ sealed interface Routes : NavKey {
     data object SetCategoryBudget : Routes
 
     @Serializable
-    data object Dashboard : Routes
+    data object Main : Routes
 }
