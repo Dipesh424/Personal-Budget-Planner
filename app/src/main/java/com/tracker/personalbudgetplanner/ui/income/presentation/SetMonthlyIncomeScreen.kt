@@ -1,4 +1,4 @@
-package com.tracker.personalbudgetplanner.features.income.presentation
+package com.tracker.personalbudgetplanner.ui.income.presentation
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -41,11 +41,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tracker.personalbudgetplanner.R
 import com.tracker.personalbudgetplanner.ui.theme.PersonalBudgetPlannerTheme
 
 @Composable
@@ -62,7 +64,6 @@ fun IncomeSetupScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
     ) {
-        // Aesthetic background glow
         Box(
             modifier = Modifier
                 .offset(x = 100.dp, y = (-100).dp)
@@ -91,7 +92,7 @@ fun IncomeSetupScreen(
             ) {
                 Column {
                     Text(
-                        text = "Fuel your journey",
+                        text = "Plan with purpose",
                         style = MaterialTheme.typography.displaySmall.copy(
                             fontWeight = FontWeight.Black, // Heavier weight for premium look
                             letterSpacing = (-1.5).sp
@@ -100,7 +101,7 @@ fun IncomeSetupScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "What is your average monthly income?",
+                        text = stringResource(R.string.what_is_your_average_monthly_income),
                         style = MaterialTheme.typography.titleMedium.copy(
                             lineHeight = 24.sp,
                             fontWeight = FontWeight.Medium
@@ -120,13 +121,15 @@ fun IncomeSetupScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(32.dp),
                     color = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                    border = BorderStroke(
+                        1.dp,
+                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                    )
                 ) {
                     Row(
                         modifier = Modifier.padding(28.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // NPR Badge - More vibrant
                         Surface(
                             color = MaterialTheme.colorScheme.primary,
                             shape = RoundedCornerShape(16.dp)
@@ -178,7 +181,10 @@ fun IncomeSetupScreen(
                     .height(60.dp),
                 shape = CircleShape, // Fully rounded for a modern "pill" look
                 enabled = income.isNotEmpty(),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp, pressedElevation = 4.dp)
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 0.dp,
+                    pressedElevation = 4.dp
+                )
             ) {
                 Text(
                     "Continue",
@@ -191,8 +197,9 @@ fun IncomeSetupScreen(
 
 @Preview(showBackground = true)
 @Composable
-fun SetMonthlyIncomeScreenPreview() {
+fun IncomeSetupScreenScreenPreview() {
     PersonalBudgetPlannerTheme {
-//        IncomeSetupScreen(onContinueClicked = {})
+        IncomeSetupScreen(onContinue = { _, _ ->
+        })
     }
 }

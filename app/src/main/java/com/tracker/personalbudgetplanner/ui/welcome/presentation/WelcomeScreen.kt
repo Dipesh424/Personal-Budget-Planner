@@ -1,4 +1,4 @@
-package com.tracker.personalbudgetplanner.features.welcome.presentation
+package com.tracker.personalbudgetplanner.ui.welcome.presentation
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring

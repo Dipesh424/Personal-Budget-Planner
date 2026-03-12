@@ -1,44 +1,58 @@
 package com.tracker.personalbudgetplanner.navigation
 
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import com.tracker.personalbudgetplanner.features.budget.presentation.BudgetCategoryScreen
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.ui.NavDisplay
 import com.tracker.personalbudgetplanner.features.dashboard.presentation.DashboardScreen
-import com.tracker.personalbudgetplanner.features.dashboard.presentation.RecentActivityScreen
-import com.tracker.personalbudgetplanner.features.income.presentation.IncomeSetupScreen
-import com.tracker.personalbudgetplanner.features.welcome.presentation.WelcomeScreen
+import com.tracker.personalbudgetplanner.ui.budget_category.presentation.SetBudgetCategoryScreen
+import com.tracker.personalbudgetplanner.ui.income.presentation.IncomeSetupScreen
+import com.tracker.personalbudgetplanner.ui.welcome.presentation.WelcomeScreen
 
 @Composable
-fun NavigationRoot(){
-    val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "welcome") {
-        composable("welcome") {
-            WelcomeScreen(
-                onTimeout = { navController.navigate("income_setup") }
-            )
-        }
-        composable("income_setup") {
-            IncomeSetupScreen(
-                onContinue = { _, _ -> navController.navigate("budget_category_setup") }
-            )
-        }
-        composable("budget_category_setup") {
-            BudgetCategoryScreen(
-                onFinish = { navController.navigate("dashboard") },
-                onSkip = { navController.navigate("dashboard") }
-            )
-        }
-        composable("dashboard") {
-            DashboardScreen(
-                onSeeAllClick = { navController.navigate("recent_activity") }
-            )
-        }
-        composable("recent_activity") {
-            RecentActivityScreen(
-                onBack = { navController.popBackStack() }
-            )
-        }
+fun NavigationRoot() {
+    val backStack = rememberNavBackStack(Routes.Welcome)
+
+    Scaffold() { innerPadding ->
+        NavDisplay(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            entryDecorators = listOf(
+                rememberSaveableStateHolderNavEntryDecorator(),
+                rememberViewModelStoreNavEntryDecorator()
+
+            ), backStack = backStack,
+            entryProvider = entryProvider {
+                entry<Routes.Welcome> {
+                    WelcomeScreen {
+                        backStack.remove(Routes.Welcome)
+                        backStack.add(Routes.OnBoarding)
+                    }
+                }
+                entry<Routes.OnBoarding> {
+                    IncomeSetupScreen(onContinue = { _, _ ->
+                        backStack.add(Routes.SetCategoryBudget)
+                    })
+                }
+                entry<Routes.SetCategoryBudget> {
+                    SetBudgetCategoryScreen(onFinish = {
+                        backStack.add(Routes.Dashboard)
+                    }, onSkip = {
+                        backStack.add(Routes.Dashboard)
+                    })
+                }
+
+                entry<Routes.Dashboard> {
+                    DashboardScreen { }
+                }
+            }
+        )
     }
 }
