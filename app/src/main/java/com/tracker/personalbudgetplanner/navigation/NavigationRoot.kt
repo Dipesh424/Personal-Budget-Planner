@@ -10,6 +10,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import com.tracker.personalbudgetplanner.features.dashboard.presentation.DashboardScreen
 import com.tracker.personalbudgetplanner.ui.budget_category.presentation.SetBudgetCategoryScreen
 import com.tracker.personalbudgetplanner.ui.income.presentation.IncomeSetupScreen
 import com.tracker.personalbudgetplanner.ui.welcome.presentation.WelcomeScreen
@@ -42,10 +43,14 @@ fun NavigationRoot() {
                 }
                 entry<Routes.SetCategoryBudget> {
                     SetBudgetCategoryScreen(onFinish = {
-
+                        backStack.add(Routes.Dashboard)
                     }, onSkip = {
-
+                        backStack.add(Routes.Dashboard)
                     })
+                }
+
+                entry<Routes.Dashboard> {
+                    DashboardScreen { }
                 }
             }
         )
