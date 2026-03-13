@@ -30,7 +30,9 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.tracker.personalbudgetplanner.features.dashboard.presentation.DashboardScreen
 import com.tracker.personalbudgetplanner.navigation.BottomNavKey
-import com.tracker.personalbudgetplanner.ui.budget_category.presentation.SetBudgetCategoryScreen
+import com.tracker.personalbudgetplanner.ui.budget_category.presentation.CategoriesScreenRoot
+import com.tracker.personalbudgetplanner.ui.budget_category.presentation.CategoriesViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun MainScreen() {
@@ -97,7 +99,6 @@ fun MainScreen() {
     Scaffold(
         bottomBar = {
             NavigationBar(
-                // Use surface with a very subtle elevation for a clean 'dock' feel
                 containerColor = MaterialTheme.colorScheme.surface,
                 tonalElevation = 0.dp,
                 modifier = Modifier.graphicsLayer {
@@ -172,7 +173,8 @@ fun MainScreen() {
                 }
 
                 entry<BottomNavKey.Categories> {
-                    SetBudgetCategoryScreen({}, {})
+                    val viewModel = koinViewModel<CategoriesViewModel>()
+                    CategoriesScreenRoot(viewModel)
                 }
 
                 entry<BottomNavKey.Settings> {

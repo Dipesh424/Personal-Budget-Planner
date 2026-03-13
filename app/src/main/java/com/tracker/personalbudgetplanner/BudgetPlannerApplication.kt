@@ -2,6 +2,7 @@ package com.tracker.personalbudgetplanner
 
 import android.app.Application
 import com.tracker.personalbudgetplanner.di.appModule
+import com.tracker.personalbudgetplanner.di.repositoryModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 
@@ -10,7 +11,7 @@ class BudgetPlannerApplication : Application() {
         super.onCreate()
         startKoin {
             androidContext(this@BudgetPlannerApplication)
-            modules(appModule)
+            modules(appModule, repositoryModule)
         }
     }
 }

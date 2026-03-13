@@ -29,22 +29,18 @@ import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Checkroom
 import androidx.compose.material.icons.filled.ChildCare
 import androidx.compose.material.icons.filled.ConfirmationNumber
-import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Flight
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.LocalCafe
 import androidx.compose.material.icons.filled.LocalGroceryStore
 import androidx.compose.material.icons.filled.MedicalServices
 import androidx.compose.material.icons.filled.MoreHoriz
-import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.ShoppingBag
-import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
@@ -56,7 +52,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -70,50 +66,36 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tracker.personalbudgetplanner.ui.budget_category.domain.Categories
 import com.tracker.personalbudgetplanner.ui.theme.PersonalBudgetPlannerTheme
+import com.tracker.personalbudgetplanner.utils.constants.IconConstants
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun SetBudgetCategoryScreen(
+fun CategoriesScreenRoot(
+    viewModel: CategoriesViewModel = koinViewModel()
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    CategoriesScreen(categoryState = state, onFinish = {}) { }
+}
+
+@Composable
+fun CategoriesScreen(
+    categoryState: CategoryState,
     onFinish: (Map<String, Double>) -> Unit,
     onSkip: () -> Unit
 ) {
-    val categories = remember {
-        mutableStateListOf(
-            // --- Essentials ---
-            CategoryItem("Groceries", Icons.Default.LocalGroceryStore, "0"),
-            CategoryItem("Rent & Housing", Icons.Default.Home, "0"),
-            CategoryItem("Utilities", Icons.Default.Lightbulb, "0"),
-            CategoryItem("Transport", Icons.Default.DirectionsCar, "0"),
-
-            // --- Family & Personal ---
-            CategoryItem("Baby Care", Icons.Default.ChildCare, "0"),
-            CategoryItem("Clothing", Icons.Default.Checkroom, "0"),
-            CategoryItem("Health", Icons.Default.MedicalServices, "0"),
-            CategoryItem("Personal Care", Icons.Default.SelfImprovement, "0"),
-
-            // --- Food & Lifestyle ---
-            CategoryItem("Dining Out", Icons.Default.LocalCafe, "0"),
-            CategoryItem("Shopping", Icons.Default.ShoppingBag, "0"),
-            CategoryItem("Entertainment", Icons.Default.ConfirmationNumber, "0"),
-
-            // --- Finance & Future ---
-            CategoryItem("Investments", Icons.AutoMirrored.Filled.TrendingUp, "0"),
-            CategoryItem("Education", Icons.Default.School, "0"),
-            CategoryItem("Insurance", Icons.Default.Shield, "0"),
-
-            // --- Others ---
-            CategoryItem("Gifts & Charity", Icons.Default.Favorite, "0"),
-            CategoryItem("Miscellaneous", Icons.Default.MoreHoriz, "0")
-        )
-    }
 
     val visible = remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { visible.value = true }
 
-    Box(modifier = Modifier
-        .fillMaxSize()
-        .background(MaterialTheme.colorScheme.surface)) {
-        // Aesthetic Glow
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
+    ) {
         Box(
             modifier = Modifier
                 .offset(x = (-80).dp, y = (-80).dp)
@@ -159,11 +141,11 @@ fun SetBudgetCategoryScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(bottom = 24.dp)
             ) {
-                itemsIndexed(categories) { index, item ->
+                itemsIndexed(categoryState.categories) { index, item ->
                     BudgetCategoryRow(
                         category = item,
                         onAmountChange = { newAmount ->
-                            categories[index] = item.copy(amount = newAmount)
+//                            categories[index] = item.copy(amount = newAmount)
                         }
                     )
                 }
@@ -176,9 +158,7 @@ fun SetBudgetCategoryScreen(
             ) {
                 Button(
                     onClick = {
-                        onFinish(categories.associate {
-                            it.name to (it.amount.toDoubleOrNull() ?: 0.0)
-                        })
+
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -190,7 +170,7 @@ fun SetBudgetCategoryScreen(
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                     )
                 }
-                TextButton(onClick = onSkip, modifier = Modifier.fillMaxWidth()) {
+                TextButton(onClick = {}, modifier = Modifier.fillMaxWidth()) {
                     Text(
                         "I'll do this later",
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
@@ -203,7 +183,7 @@ fun SetBudgetCategoryScreen(
 
 @Composable
 fun BudgetCategoryRow(
-    category: CategoryItem,
+    category: Categories,
     onAmountChange: (String) -> Unit
 ) {
     Surface(
@@ -220,7 +200,7 @@ fun BudgetCategoryRow(
                     modifier = Modifier.size(44.dp)
                 ) {
                     Icon(
-                        imageVector = category.icon,
+                        imageVector = getIconVector(category.iconName),
                         contentDescription = null,
                         modifier = Modifier.padding(10.dp),
                         tint = MaterialTheme.colorScheme.primary
@@ -243,7 +223,7 @@ fun BudgetCategoryRow(
                         fontWeight = FontWeight.Bold
                     )
                     BasicTextField(
-                        value = category.amount,
+                        value = category.budgetLimit.toString(),
                         onValueChange = { if (it.all { c -> c.isDigit() }) onAmountChange(it) },
                         modifier = Modifier
                             .width(IntrinsicSize.Min)
@@ -254,7 +234,7 @@ fun BudgetCategoryRow(
                         ),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         decorationBox = { inner ->
-                            if (category.amount == "0") Text(
+                            if (category.budgetLimit.toString() == "0") Text(
                                 "0",
                                 style = MaterialTheme.typography.titleLarge,
                                 color = Color.LightGray,
@@ -284,12 +264,35 @@ fun BudgetCategoryRow(
     }
 }
 
-data class CategoryItem(val name: String, val icon: ImageVector, val amount: String)
+private fun getIconVector(iconName: String): ImageVector {
+    return when (iconName) {
+        IconConstants.grocery -> Icons.Default.LocalGroceryStore
+        IconConstants.home -> Icons.Default.Home
+        IconConstants.utilities -> Icons.Default.Lightbulb
+        IconConstants.transport -> Icons.Default.DirectionsCar
+        IconConstants.baby -> Icons.Default.ChildCare
+        IconConstants.clothing -> Icons.Default.Checkroom
+        IconConstants.health -> Icons.Default.MedicalServices
+        IconConstants.personal -> Icons.Default.SelfImprovement
+        IconConstants.dinner -> Icons.Default.LocalCafe
+        IconConstants.shopping -> Icons.Default.ShoppingBag
+        IconConstants.entertainment -> Icons.Default.ConfirmationNumber
+        IconConstants.investments -> Icons.AutoMirrored.Filled.TrendingUp
+        IconConstants.education -> Icons.Default.School
+        IconConstants.insurance -> Icons.Default.Shield
+        IconConstants.gifts -> Icons.Default.Favorite
+        IconConstants.misc -> Icons.Default.MoreHoriz
+        else -> Icons.Default.MoreHoriz
+    }
+}
 
 @Preview(showBackground = true)
 @Composable
 fun WelcomeScreenPreview() {
     PersonalBudgetPlannerTheme {
-        SetBudgetCategoryScreen(onFinish = {}, onSkip = {})
+        CategoriesScreen(
+            categoryState = CategoryState(),
+            onFinish = {},
+            onSkip = {})
     }
 }

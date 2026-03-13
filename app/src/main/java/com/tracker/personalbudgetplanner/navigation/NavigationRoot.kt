@@ -10,10 +10,12 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import com.tracker.personalbudgetplanner.ui.budget_category.presentation.SetBudgetCategoryScreen
+import com.tracker.personalbudgetplanner.ui.budget_category.presentation.CategoriesScreenRoot
+import com.tracker.personalbudgetplanner.ui.budget_category.presentation.CategoriesViewModel
 import com.tracker.personalbudgetplanner.ui.income.presentation.IncomeSetupScreen
 import com.tracker.personalbudgetplanner.ui.main.presentation.MainScreen
 import com.tracker.personalbudgetplanner.ui.welcome.presentation.WelcomeScreen
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun NavigationRoot() {
@@ -42,11 +44,8 @@ fun NavigationRoot() {
                     })
                 }
                 entry<Routes.SetCategoryBudget> {
-                    SetBudgetCategoryScreen(onFinish = {
-                        backStack.add(Routes.Main)
-                    }, onSkip = {
-                        backStack.add(Routes.Main)
-                    })
+                    val viewModel = koinViewModel<CategoriesViewModel>()
+                    CategoriesScreenRoot(viewModel)
                 }
 
                 entry<Routes.Main> {

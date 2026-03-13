@@ -2,14 +2,14 @@ package com.tracker.personalbudgetplanner.core.data
 
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.tracker.personalbudgetplanner.ui.budget_category.data.local.BudgetCategoryEntity
+import com.tracker.personalbudgetplanner.ui.budget_category.data.local.CategoryEntity
 import com.tracker.personalbudgetplanner.ui.budget_category.data.local.IconEntity
 import com.tracker.personalbudgetplanner.utils.constants.IconConstants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class DatabaseInitializer(private val appDao: AppDao) : RoomDatabase.Callback() {
+class DatabaseInitializer(private val provideDao: () -> AppDao) : RoomDatabase.Callback() {
     override fun onCreate(db: SupportSQLiteDatabase) {
         super.onCreate(db)
         CoroutineScope(Dispatchers.IO).launch {
@@ -31,31 +31,31 @@ class DatabaseInitializer(private val appDao: AppDao) : RoomDatabase.Callback() 
                 IconEntity(id = 15, iconName = IconConstants.gifts),
                 IconEntity(id = 16, iconName = IconConstants.misc),
             )
-            appDao.insertIcons(iconList)
+            provideDao().insertIcons(iconList)
 
             val initialCategories = listOf(
-                BudgetCategoryEntity(name = "Groceries", iconId = 1, budgetLimit = 0.0),
-                BudgetCategoryEntity(name = "Rent & Housing", iconId = 2, budgetLimit = 0.0),
-                BudgetCategoryEntity(name = "Utilities", iconId = 3, budgetLimit = 0.0),
-                BudgetCategoryEntity(name = "Transport", iconId = 4, budgetLimit = 0.0),
+                CategoryEntity(name = "Groceries", iconId = 1, budgetLimit = 0.0),
+                CategoryEntity(name = "Rent & Housing", iconId = 2, budgetLimit = 0.0),
+                CategoryEntity(name = "Utilities", iconId = 3, budgetLimit = 0.0),
+                CategoryEntity(name = "Transport", iconId = 4, budgetLimit = 0.0),
 
-                BudgetCategoryEntity(name = "Baby Care", iconId = 5, budgetLimit = 0.0),
-                BudgetCategoryEntity(name = "Clothing", iconId = 6, budgetLimit = 0.0),
-                BudgetCategoryEntity(name = "Health", iconId = 7, budgetLimit = 0.0),
-                BudgetCategoryEntity(name = "Personal Care", iconId = 8, budgetLimit = 0.0),
+                CategoryEntity(name = "Baby Care", iconId = 5, budgetLimit = 0.0),
+                CategoryEntity(name = "Clothing", iconId = 6, budgetLimit = 0.0),
+                CategoryEntity(name = "Health", iconId = 7, budgetLimit = 0.0),
+                CategoryEntity(name = "Personal Care", iconId = 8, budgetLimit = 0.0),
 
-                BudgetCategoryEntity(name = "Dining Out", iconId = 9, budgetLimit = 0.0),
-                BudgetCategoryEntity(name = "Shopping", iconId = 10, budgetLimit = 0.0),
-                BudgetCategoryEntity(name = "Entertainment", iconId = 11, budgetLimit = 0.0),
+                CategoryEntity(name = "Dining Out", iconId = 9, budgetLimit = 0.0),
+                CategoryEntity(name = "Shopping", iconId = 10, budgetLimit = 0.0),
+                CategoryEntity(name = "Entertainment", iconId = 11, budgetLimit = 0.0),
 
-                BudgetCategoryEntity(name = "Investments", iconId = 12, budgetLimit = 0.0),
-                BudgetCategoryEntity(name = "Education", iconId = 13, budgetLimit = 0.0),
-                BudgetCategoryEntity(name = "Insurance", iconId = 14, budgetLimit = 0.0),
+                CategoryEntity(name = "Investments", iconId = 12, budgetLimit = 0.0),
+                CategoryEntity(name = "Education", iconId = 13, budgetLimit = 0.0),
+                CategoryEntity(name = "Insurance", iconId = 14, budgetLimit = 0.0),
 
-                BudgetCategoryEntity(name = "Gifts & Charity", iconId = 15, budgetLimit = 0.0),
-                BudgetCategoryEntity(name = "Miscellaneous", iconId = 16, budgetLimit = 0.0)
+                CategoryEntity(name = "Gifts & Charity", iconId = 15, budgetLimit = 0.0),
+                CategoryEntity(name = "Miscellaneous", iconId = 16, budgetLimit = 0.0)
             )
-            appDao.insertCategories(initialCategories)
+            provideDao().insertCategories(initialCategories)
         }
     }
 }

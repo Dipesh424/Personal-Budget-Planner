@@ -1,11 +1,14 @@
 package com.tracker.personalbudgetplanner.ui.budget_category.data.local
 
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
+import androidx.room.Relation
+import com.tracker.personalbudgetplanner.utils.constants.DbConstants
 
 @Entity(
-    tableName = "budget_categories", foreignKeys = [
+    tableName = DbConstants.table_categories, foreignKeys = [
         ForeignKey(
             entity = IconEntity::class,
             parentColumns = ["id"],
@@ -14,10 +17,16 @@ import androidx.room.PrimaryKey
         )
     ]
 )
-data class BudgetCategoryEntity(
+data class CategoryEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     val name: String,
     val iconId: Int,
     val budgetLimit: Double = 0.0
+)
+
+data class CategoryWithIcon(
+    @Embedded val category: CategoryEntity,
+    @Relation(parentColumn = "iconId", entityColumn = "id")
+    val icon: IconEntity
 )
