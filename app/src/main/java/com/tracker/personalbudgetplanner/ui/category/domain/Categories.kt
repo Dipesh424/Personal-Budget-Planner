@@ -1,4 +1,4 @@
-package com.tracker.personalbudgetplanner.ui.budget_category.domain
+package com.tracker.personalbudgetplanner.ui.category.domain
 
 data class Categories(
     val id: Int,

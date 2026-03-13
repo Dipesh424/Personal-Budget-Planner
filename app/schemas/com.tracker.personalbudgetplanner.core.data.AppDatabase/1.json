@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "c03b96668ed87e699b0e87dad34e9cb6",
+    "identityHash": "93aedb8751c804468067007169f52910",
     "entities": [
       {
         "tableName": "categories",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `iconId` INTEGER NOT NULL, `budgetLimit` REAL NOT NULL, FOREIGN KEY(`iconId`) REFERENCES `icons`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `iconId` INTEGER NOT NULL, FOREIGN KEY(`iconId`) REFERENCES `icons`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
         "fields": [
           {
             "fieldPath": "id",
@@ -24,12 +24,6 @@
             "fieldPath": "iconId",
             "columnName": "iconId",
             "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "budgetLimit",
-            "columnName": "budgetLimit",
-            "affinity": "REAL",
             "notNull": true
           }
         ],
@@ -80,7 +74,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c03b96668ed87e699b0e87dad34e9cb6')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '93aedb8751c804468067007169f52910')"
     ]
   }
 }

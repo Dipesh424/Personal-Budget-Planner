@@ -1,4 +1,4 @@
-package com.tracker.personalbudgetplanner.ui.budget_category.data.local
+package com.tracker.personalbudgetplanner.ui.category.data.local
 
 import androidx.room.Embedded
 import androidx.room.Entity
@@ -22,7 +22,6 @@ data class CategoryEntity(
     val id: Int = 0,
     val name: String,
     val iconId: Int,
-    val budgetLimit: Double = 0.0
 )
 
 data class CategoryWithIcon(

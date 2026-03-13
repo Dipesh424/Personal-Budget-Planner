@@ -1,4 +1,4 @@
-package com.tracker.personalbudgetplanner.ui.budget_category.data.local
+package com.tracker.personalbudgetplanner.ui.category.data.local
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

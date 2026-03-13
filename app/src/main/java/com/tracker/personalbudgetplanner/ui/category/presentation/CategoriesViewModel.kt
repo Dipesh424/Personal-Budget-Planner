@@ -1,8 +1,8 @@
-package com.tracker.personalbudgetplanner.ui.budget_category.presentation
+package com.tracker.personalbudgetplanner.ui.category.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.tracker.personalbudgetplanner.ui.budget_category.domain.repository.CategoriesRepository
+import com.tracker.personalbudgetplanner.ui.category.domain.repository.CategoriesRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
