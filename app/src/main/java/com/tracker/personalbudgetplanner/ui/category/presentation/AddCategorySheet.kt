@@ -30,7 +30,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
@@ -55,13 +54,15 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun AddCategorySheetRoot(
     viewModel: CategoriesViewModel = koinViewModel(),
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onSave: (name: String, iconId: Int, isExpense: Boolean) -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     AddCategorySheet(
         categoryState = state,
         onDismiss = onDismiss,
-        onSave = { _, _, _ -> })
+        onSave = onSave
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -73,7 +74,7 @@ fun AddCategorySheet(
 ) {
     var categoryName by remember { mutableStateOf("") }
     var isExpense by remember { mutableStateOf(true) }
-    var selectedIcon by remember { mutableIntStateOf(0) }
+    var selectedIconId by remember { mutableIntStateOf(0) }
     val sheetState = rememberModalBottomSheetState()
 
     ModalBottomSheet(
@@ -159,9 +160,9 @@ fun AddCategorySheet(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(categoryState.icons) { icon ->
-                        val isSelected = selectedIcon == icon.id
+                        val isSelected = selectedIconId == icon.id
                         Surface(
-                            onClick = { selectedIcon = icon.id },
+                            onClick = { selectedIconId = icon.id },
                             shape = CircleShape,
                             color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceColorAtElevation(
                                 2.dp
@@ -212,7 +213,7 @@ fun AddCategorySheet(
                     onClick = {
                         if (categoryName.isNotBlank()) onSave(
                             categoryName,
-                            selectedIcon,
+                            selectedIconId,
                             isExpense
                         )
                     },

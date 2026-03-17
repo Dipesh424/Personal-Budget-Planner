@@ -23,7 +23,7 @@ class CategoriesRepositoryImpl(private val appDao: AppDao) : CategoriesRepositor
 
     override suspend fun insertCategory(category: Categories): EmptyResult<DataError.Local> {
         return try {
-            appDao.upsertCategory(category.toCategoryEntity())
+            appDao.insertCategory(category.toCategoryEntity())
             Result.Success(Unit)
         } catch (e: SQLiteException) {
             Result.Error(DataError.Local.DISK_FULL)
@@ -33,6 +33,15 @@ class CategoriesRepositoryImpl(private val appDao: AppDao) : CategoriesRepositor
     override fun getCategoryIcons(): Flow<List<CategoryIcon>> {
         return appDao.getCategoryIcons().map { entities ->
             entities.map { it.toCategoryIcon() }
+        }
+    }
+
+    override suspend fun deleteCategory(category: Categories): EmptyResult<DataError.Local> {
+        return try {
+            appDao.deleteCategory(category.toCategoryEntity())
+            Result.Success(Unit)
+        } catch (e: SQLiteException) {
+            Result.Error(DataError.Local.DISK_FULL)
         }
     }
 }

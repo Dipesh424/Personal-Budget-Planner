@@ -4,6 +4,7 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.tracker.personalbudgetplanner.ui.category.data.local.CategoryEntity
 import com.tracker.personalbudgetplanner.ui.category.data.local.IconEntity
+import com.tracker.personalbudgetplanner.utils.constants.DbConstants
 import com.tracker.personalbudgetplanner.utils.constants.IconConstants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,26 +35,62 @@ class DatabaseInitializer(private val provideDao: () -> AppDao) : RoomDatabase.C
             provideDao().insertIcons(iconList)
 
             val initialCategories = listOf(
-                CategoryEntity(name = "Groceries", iconId = 1),
-                CategoryEntity(name = "Rent & Housing", iconId = 2),
-                CategoryEntity(name = "Utilities", iconId = 3),
-                CategoryEntity(name = "Transport", iconId = 4),
+                CategoryEntity(name = "Groceries", iconId = 1, type = DbConstants.category_expense),
+                CategoryEntity(
+                    name = "Rent & Housing",
+                    iconId = 2,
+                    type = DbConstants.category_expense
+                ),
+                CategoryEntity(name = "Utilities", iconId = 3, type = DbConstants.category_expense),
+                CategoryEntity(name = "Transport", iconId = 4, type = DbConstants.category_expense),
 
-                CategoryEntity(name = "Baby Care", iconId = 5),
-                CategoryEntity(name = "Clothing", iconId = 6),
-                CategoryEntity(name = "Health", iconId = 7),
-                CategoryEntity(name = "Personal Care", iconId = 8),
+                CategoryEntity(name = "Baby Care", iconId = 5, type = DbConstants.category_expense),
+                CategoryEntity(name = "Clothing", iconId = 6, type = DbConstants.category_expense),
+                CategoryEntity(name = "Health", iconId = 7, type = DbConstants.category_expense),
+                CategoryEntity(
+                    name = "Personal Care",
+                    iconId = 8,
+                    type = DbConstants.category_expense
+                ),
 
-                CategoryEntity(name = "Dining Out", iconId = 9),
-                CategoryEntity(name = "Shopping", iconId = 10),
-                CategoryEntity(name = "Entertainment", iconId = 11),
+                CategoryEntity(
+                    name = "Dining Out",
+                    iconId = 9,
+                    type = DbConstants.category_expense
+                ),
+                CategoryEntity(name = "Shopping", iconId = 10, type = DbConstants.category_expense),
+                CategoryEntity(
+                    name = "Entertainment",
+                    iconId = 11,
+                    type = DbConstants.category_expense
+                ),
 
-                CategoryEntity(name = "Investments", iconId = 12),
-                CategoryEntity(name = "Education", iconId = 13),
-                CategoryEntity(name = "Insurance", iconId = 14),
+                CategoryEntity(
+                    name = "Investments",
+                    iconId = 12,
+                    type = DbConstants.category_expense
+                ),
+                CategoryEntity(
+                    name = "Education",
+                    iconId = 13,
+                    type = DbConstants.category_expense
+                ),
+                CategoryEntity(
+                    name = "Insurance",
+                    iconId = 14,
+                    type = DbConstants.category_expense
+                ),
 
-                CategoryEntity(name = "Gifts & Charity", iconId = 15),
-                CategoryEntity(name = "Miscellaneous", iconId = 16)
+                CategoryEntity(
+                    name = "Gifts & Charity",
+                    iconId = 15,
+                    type = DbConstants.category_expense
+                ),
+                CategoryEntity(
+                    name = "Miscellaneous",
+                    iconId = 16,
+                    type = DbConstants.category_expense
+                )
             )
             provideDao().insertCategories(initialCategories)
         }

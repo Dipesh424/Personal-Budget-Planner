@@ -1,6 +1,7 @@
 package com.tracker.personalbudgetplanner.core.data
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -25,8 +26,11 @@ interface AppDao {
     fun getCategories(): Flow<List<CategoryWithIcon>>
 
     @Upsert
-    suspend fun upsertCategory(category: CategoryEntity)
+    suspend fun insertCategory(category: CategoryEntity)
 
     @Query("SELECT * FROM ${DbConstants.table_category_icons} ORDER BY iconName ASC")
     fun getCategoryIcons(): Flow<List<IconEntity>>
+
+    @Delete
+    suspend fun deleteCategory(category: CategoryEntity)
 }

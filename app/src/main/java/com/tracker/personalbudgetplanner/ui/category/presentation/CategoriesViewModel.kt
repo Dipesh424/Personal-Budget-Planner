@@ -2,6 +2,7 @@ package com.tracker.personalbudgetplanner.ui.category.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tracker.personalbudgetplanner.ui.category.domain.Categories
 import com.tracker.personalbudgetplanner.ui.category.domain.repository.CategoriesRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class CategoriesViewModel(private val categoriesRepository: CategoriesRepository) : ViewModel() {
     private val _state = MutableStateFlow(CategoryState())
@@ -40,5 +42,17 @@ class CategoriesViewModel(private val categoriesRepository: CategoriesRepository
             .onEach { icons ->
                 _state.update { it.copy(icons = icons) }
             }.launchIn(viewModelScope)
+    }
+
+    fun addNewCategory(category: Categories) {
+        viewModelScope.launch {
+            categoriesRepository.insertCategory(category)
+        }
+    }
+
+    fun deleteCategory(category: Categories) {
+        viewModelScope.launch {
+            categoriesRepository.deleteCategory(category)
+        }
     }
 }
