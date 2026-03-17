@@ -16,6 +16,7 @@ class CategoriesViewModel(private val categoriesRepository: CategoriesRepository
     private val _state = MutableStateFlow(CategoryState())
     val state = _state.onStart {
         observeCategories()
+        getCategoryIcons()
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000L),
@@ -23,12 +24,21 @@ class CategoriesViewModel(private val categoriesRepository: CategoriesRepository
     )
 
     private var observeCategoriesJob: Job? = null
+    private var getCategoryIconsJob: Job? = null
 
     fun observeCategories() {
         observeCategoriesJob?.cancel()
         observeCategoriesJob = categoriesRepository.getCategories()
             .onEach { categories ->
                 _state.update { it.copy(categories = categories) }
+            }.launchIn(viewModelScope)
+    }
+
+    fun getCategoryIcons() {
+        getCategoryIconsJob?.cancel()
+        getCategoryIconsJob = categoriesRepository.getCategoryIcons()
+            .onEach { icons ->
+                _state.update { it.copy(icons = icons) }
             }.launchIn(viewModelScope)
     }
 }

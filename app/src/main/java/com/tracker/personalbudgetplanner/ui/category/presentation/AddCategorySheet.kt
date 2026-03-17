@@ -20,15 +20,18 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -40,35 +43,42 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tracker.personalbudgetplanner.R
 import com.tracker.personalbudgetplanner.ui.theme.PersonalBudgetPlannerTheme
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun AddCategorySheetRoot(viewModel: AddCategoryViewModel = koinViewModel()) {
+fun AddCategorySheetRoot(
+    viewModel: CategoriesViewModel = koinViewModel(),
+    onDismiss: () -> Unit
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     AddCategorySheet(
-        iconState = state,
-        onDismiss = {},
+        categoryState = state,
+        onDismiss = onDismiss,
         onSave = { _, _, _ -> })
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddCategorySheet(
-    iconState: IconState,
+    categoryState: CategoryState,
     onDismiss: () -> Unit,
     onSave: (name: String, iconId: Int, isExpense: Boolean) -> Unit
 ) {
     var categoryName by remember { mutableStateOf("") }
     var isExpense by remember { mutableStateOf(true) }
     var selectedIcon by remember { mutableIntStateOf(0) }
+    val sheetState = rememberModalBottomSheetState()
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
+        sheetState = sheetState,
         containerColor = MaterialTheme.colorScheme.surface,
         dragHandle = { BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.outlineVariant) }
     ) {
@@ -81,7 +91,7 @@ fun AddCategorySheet(
         ) {
             // Header
             Text(
-                text = "New Category",
+                text = stringResource(R.string.new_category),
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Black)
             )
 
@@ -96,7 +106,10 @@ fun AddCategorySheet(
                     )
                     .padding(4.dp)
             ) {
-                listOf(true to "Expense", false to "Income").forEach { (type, label) ->
+                listOf(
+                    true to stringResource(R.string.expense),
+                    false to stringResource(R.string.income)
+                ).forEach { (type, label) ->
                     val isSelected = isExpense == type
                     Box(
                         modifier = Modifier
@@ -133,7 +146,7 @@ fun AddCategorySheet(
             // 3. Icon Picker Grid
             Column {
                 Text(
-                    text = "Select Icon",
+                    text = stringResource(R.string.select_icon),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -145,7 +158,7 @@ fun AddCategorySheet(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(iconState.icons) { icon ->
+                    items(categoryState.icons) { icon ->
                         val isSelected = selectedIcon == icon.id
                         Surface(
                             onClick = { selectedIcon = icon.id },
@@ -175,13 +188,24 @@ fun AddCategorySheet(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                TextButton(
+                OutlinedButton(
                     onClick = onDismiss,
                     modifier = Modifier
                         .weight(1f)
-                        .height(56.dp)
+                        .height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                    ),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
                 ) {
-                    Text("Cancel", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                    Text(
+                        text = stringResource(R.string.cancel),
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+                    )
                 }
 
                 Button(
@@ -198,7 +222,7 @@ fun AddCategorySheet(
                     shape = RoundedCornerShape(16.dp),
                     enabled = categoryName.isNotBlank()
                 ) {
-                    Text("Save Category", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.save_category), fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -209,6 +233,6 @@ fun AddCategorySheet(
 @Composable()
 fun AddCategorySheetPreview() {
     PersonalBudgetPlannerTheme {
-        AddCategorySheet(IconState(), onDismiss = {}, onSave = { _, _, _ -> })
+        AddCategorySheet(CategoryState(), onDismiss = {}, onSave = { _, _, _ -> })
     }
 }
