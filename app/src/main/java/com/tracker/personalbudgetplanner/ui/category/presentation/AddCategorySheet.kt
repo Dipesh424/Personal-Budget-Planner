@@ -39,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,6 +54,7 @@ import com.tracker.personalbudgetplanner.R
 import com.tracker.personalbudgetplanner.ui.category.domain.Categories
 import com.tracker.personalbudgetplanner.ui.theme.PersonalBudgetPlannerTheme
 import com.tracker.personalbudgetplanner.utils.constants.DbConstants
+import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -85,6 +87,14 @@ fun AddCategorySheet(
     var selectedIconId by remember { mutableIntStateOf(existingCategory?.iconId ?: 0) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scrollState = rememberLazyGridState()
+    val scope = rememberCoroutineScope() // Add this
+    val animateAndDismiss = {
+        scope.launch {
+            sheetState.hide()
+        }.invokeOnCompletion {
+            onDismiss()
+        }
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -201,7 +211,7 @@ fun AddCategorySheet(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 OutlinedButton(
-                    onClick = onDismiss,
+                    onClick = {animateAndDismiss()},
                     modifier = Modifier
                         .weight(1f)
                         .height(56.dp),
