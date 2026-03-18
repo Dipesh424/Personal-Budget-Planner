@@ -4,14 +4,17 @@ import androidx.room.Room
 import com.tracker.personalbudgetplanner.core.data.AppDao
 import com.tracker.personalbudgetplanner.core.data.AppDatabase
 import com.tracker.personalbudgetplanner.core.data.DatabaseInitializer
+import com.tracker.personalbudgetplanner.core.data.MIGRATION_1_2
+import com.tracker.personalbudgetplanner.utils.constants.DbConstants
 import org.koin.dsl.module
 
 val appModule = module {
     single {
         Room.databaseBuilder(
             get(),
-            AppDatabase::class.java, "db_budget_planner"
-        ).addCallback(DatabaseInitializer(get<AppDao>()))
+            AppDatabase::class.java, DbConstants.dbName
+        ).addCallback(DatabaseInitializer { get<AppDao>() })
+            .addMigrations(MIGRATION_1_2)
             .build()
     }
 

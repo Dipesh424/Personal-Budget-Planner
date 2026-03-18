@@ -1,4 +1,4 @@
-package com.tracker.personalbudgetplanner.features.dashboard.presentation
+package com.tracker.personalbudgetplanner.ui.dashboard.presentation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.rounded.KeyboardArrowRight
@@ -16,7 +18,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -33,15 +38,15 @@ fun DashboardScreen(
 
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = selectedDate.atStartOfDay().toEpochSecond(java.time.ZoneOffset.UTC) * 1000
+            initialSelectedDateMillis = selectedDate.atStartOfDay().toEpochSecond(ZoneOffset.UTC) * 1000
         )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let {
-                        selectedDate = java.time.Instant.ofEpochMilli(it)
-                            .atZone(java.time.ZoneId.systemDefault())
+                        selectedDate = Instant.ofEpochMilli(it)
+                            .atZone(ZoneId.systemDefault())
                             .toLocalDate()
                     }
                     showDatePicker = false
@@ -66,8 +71,12 @@ fun DashboardScreen(
                 title = {
                     Text("My Payments", style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.ExtraBold))
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.Transparent
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent,
+                    scrolledContainerColor = Color.Unspecified,
+                    navigationIconContentColor = Color.Unspecified,
+                    titleContentColor = Color.Unspecified,
+                    actionIconContentColor = Color.Unspecified
                 )
             )
         },
@@ -154,7 +163,7 @@ fun MonthSelector(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         IconButton(onClick = onPrevious) {
-            Icon(Icons.Rounded.KeyboardArrowLeft, contentDescription = "Back", modifier = Modifier.size(32.dp))
+            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, contentDescription = "Back", modifier = Modifier.size(32.dp))
         }
         Text(
             text = currentMonthLabel,
@@ -162,7 +171,7 @@ fun MonthSelector(
             modifier = Modifier.clickable { onDateClick() }
         )
         IconButton(onClick = onNext) {
-            Icon(Icons.Rounded.KeyboardArrowRight, contentDescription = "Next", modifier = Modifier.size(32.dp))
+            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = "Next", modifier = Modifier.size(32.dp))
         }
     }
 }

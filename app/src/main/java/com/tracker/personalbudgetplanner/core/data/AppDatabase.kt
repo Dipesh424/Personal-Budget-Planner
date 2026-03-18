@@ -2,14 +2,14 @@ package com.tracker.personalbudgetplanner.core.data
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import com.tracker.personalbudgetplanner.ui.budget_category.data.local.BudgetCategoryEntity
-import com.tracker.personalbudgetplanner.ui.budget_category.data.local.IconEntity
+import com.tracker.personalbudgetplanner.ui.category.data.local.CategoryEntity
+import com.tracker.personalbudgetplanner.ui.category.data.local.IconEntity
 
 @Database(
     entities = [
-        BudgetCategoryEntity::class,
+        CategoryEntity::class,
         IconEntity::class
-    ], version = 1
+    ], version = 2
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun appDao(): AppDao

@@ -1,4 +1,4 @@
-package com.tracker.personalbudgetplanner
+package com.tracker.personalbudgetplanner.core.presentation
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
