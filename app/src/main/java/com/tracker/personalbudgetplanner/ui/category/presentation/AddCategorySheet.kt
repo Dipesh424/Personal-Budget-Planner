@@ -11,11 +11,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetDefaults
@@ -58,7 +60,7 @@ fun AddCategorySheetRoot(
     viewModel: CategoriesViewModel = koinViewModel(),
     editingCategory: Categories? = null,
     onDismiss: () -> Unit,
-    onSave: (category : Categories) -> Unit,
+    onSave: (category: Categories) -> Unit,
 
     ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -81,17 +83,19 @@ fun AddCategorySheet(
     var categoryName by remember { mutableStateOf(existingCategory?.name ?: "") }
     var isExpense by remember { mutableStateOf(existingCategory?.type == DbConstants.category_expense) }
     var selectedIconId by remember { mutableIntStateOf(existingCategory?.iconId ?: 0) }
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scrollState = rememberLazyGridState()
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = MaterialTheme.colorScheme.surface,
-        dragHandle = { BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.outlineVariant) }
+        dragHandle = { BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.outlineVariant) },
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .navigationBarsPadding()
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 40.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
@@ -160,6 +164,7 @@ fun AddCategorySheet(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 LazyVerticalGrid(
+                    state = scrollState,
                     columns = GridCells.Fixed(5),
                     modifier = Modifier.height(200.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
