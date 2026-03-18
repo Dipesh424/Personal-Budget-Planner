@@ -87,7 +87,7 @@ fun AddCategorySheet(
     var selectedIconId by remember { mutableIntStateOf(existingCategory?.iconId ?: 0) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scrollState = rememberLazyGridState()
-    val scope = rememberCoroutineScope() // Add this
+    val scope = rememberCoroutineScope()
     val animateAndDismiss = {
         scope.launch {
             sheetState.hide()
