@@ -26,11 +26,13 @@ interface AppDao {
     fun getCategories(): Flow<List<CategoryWithIcon>>
 
     @Upsert
-    suspend fun insertCategory(category: CategoryEntity)
+    suspend fun upsertCategory(category: CategoryEntity)
 
     @Query("SELECT * FROM ${DbConstants.table_category_icons} ORDER BY iconName ASC")
     fun getCategoryIcons(): Flow<List<IconEntity>>
 
     @Delete
     suspend fun deleteCategory(category: CategoryEntity)
+
+
 }

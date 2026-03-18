@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -43,6 +44,7 @@ import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -72,7 +74,6 @@ import com.tracker.personalbudgetplanner.R
 import com.tracker.personalbudgetplanner.core.presentation.AppAlertDialog
 import com.tracker.personalbudgetplanner.ui.category.domain.Categories
 import com.tracker.personalbudgetplanner.ui.theme.PersonalBudgetPlannerTheme
-import com.tracker.personalbudgetplanner.utils.constants.DbConstants
 import com.tracker.personalbudgetplanner.utils.constants.IconConstants
 import org.koin.androidx.compose.koinViewModel
 
@@ -81,8 +82,9 @@ fun CategoriesScreenRoot(
     viewModel: CategoriesViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    var showSheet by remember { mutableStateOf(false) }
+    var isAddingNew by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf<Categories?>(null) }
+    var categoryToEdit by remember { mutableStateOf<Categories?>(null) }
 
     showDeleteDialog?.let { category ->
         AppAlertDialog(
@@ -101,26 +103,22 @@ fun CategoriesScreenRoot(
             icon = Icons.Default.DeleteForever
         )
     }
-    if (showSheet) {
-        AddCategorySheetRoot(viewModel, onDismiss = {
-            showSheet = false
-        }, onSave = { name, iconId, isExpense ->
-            viewModel.addNewCategory(
-                Categories(
-                    name = name,
-                    iconId = iconId,
-                    type = if (isExpense) DbConstants.category_expense else DbConstants.category_expense
-                )
-            )
-            showSheet = false
+    if (isAddingNew || categoryToEdit != null) {
+        AddCategorySheetRoot(viewModel, editingCategory = categoryToEdit, onDismiss = {
+            isAddingNew = false
+            categoryToEdit = null
+        }, onSave = { category ->
+            viewModel.upsertCategory(category)
+            isAddingNew = false
+            categoryToEdit = null
         })
     }
     CategoriesScreen(
         categoryState = state,
         onAddCategory = {
-            showSheet = true
+            isAddingNew = true
         },
-        onEditCategory = {},
+        onEditCategory = { categoryToEdit = it },
         onDeleteCategory = { category ->
             showDeleteDialog = category
         })
@@ -133,13 +131,13 @@ fun CategoriesScreen(
     onEditCategory: (Categories) -> Unit,
     onDeleteCategory: (Categories) -> Unit
 ) {
+    val scrollState = rememberLazyListState()
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
     ) {
-        // Aesthetic Background Glow
         Box(
             modifier = Modifier
                 .offset(x = (-80).dp, y = (-80).dp)
@@ -162,14 +160,14 @@ fun CategoriesScreen(
             // Header - High Contrast Minimalist
             Column {
                 Text(
-                    text = "Categories",
+                    text = stringResource(R.string.categories),
                     style = MaterialTheme.typography.displaySmall.copy(
                         fontWeight = FontWeight.Black,
                         letterSpacing = (-1.5).sp
                     )
                 )
                 Text(
-                    text = "Manage how you organize your money",
+                    text = stringResource(R.string.manage_how_you_organize_your_money),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )
@@ -177,41 +175,56 @@ fun CategoriesScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(bottom = 100.dp) // Space for floating buttons
-            ) {
-                items(categoryState.categories) { item ->
-                    CategoryManagementRow(
-                        category = item,
-                        onEdit = { onEditCategory(item) },
-                        onDelete = { onDeleteCategory(item) }
+            if (categoryState.isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = MaterialTheme.colorScheme.primary,
+                        strokeWidth = 4.dp
                     )
                 }
+            } else {
+                LazyColumn(
+                    state = scrollState,
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(bottom = 100.dp) // Space for floating buttons
+                ) {
+                    items(categoryState.categories) { item ->
+                        CategoryManagementRow(
+                            category = item,
+                            onEdit = { onEditCategory(item) },
+                            onDelete = { onDeleteCategory(item) }
+                        )
+                    }
 
-                item {
-                    OutlinedButton(
-                        onClick = { onAddCategory() },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(64.dp)
-                            .padding(top = 8.dp),
-                        shape = RoundedCornerShape(20.dp),
-                        border = BorderStroke(
-                            1.dp,
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                        ),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.primary
-                        )
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            stringResource(R.string.add_new_category),
-                            fontWeight = FontWeight.Bold
-                        )
+                    item {
+                        OutlinedButton(
+                            onClick = { onAddCategory() },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(64.dp)
+                                .padding(top = 8.dp),
+                            shape = RoundedCornerShape(20.dp),
+                            border = BorderStroke(
+                                1.dp,
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                            ),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                stringResource(R.string.add_new_category),
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }
@@ -309,89 +322,6 @@ fun CategoryManagementRow(
         }
     }
 }
-
-//@Composable
-//fun BudgetCategoryRow(
-//    category: Categories,
-//    onAmountChange: (String) -> Unit
-//) {
-//    Surface(
-//        shape = RoundedCornerShape(24.dp),
-//        color = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
-//        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-//    ) {
-//        Column(modifier = Modifier.padding(16.dp)) {
-//            Row(verticalAlignment = Alignment.CenterVertically) {
-//                // Category Icon
-//                Surface(
-//                    shape = CircleShape,
-//                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-//                    modifier = Modifier.size(44.dp)
-//                ) {
-//                    Icon(
-//                        imageVector = getIconVector(category.iconName),
-//                        contentDescription = null,
-//                        modifier = Modifier.padding(10.dp),
-//                        tint = MaterialTheme.colorScheme.primary
-//                    )
-//                }
-//
-//                Spacer(modifier = Modifier.width(16.dp))
-//
-//                Text(
-//                    text = category.name,
-//                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-//                    modifier = Modifier.weight(1f)
-//                )
-//
-//                // The Input Field
-//                Row(verticalAlignment = Alignment.CenterVertically) {
-//                    Text(
-//                        "Rs.",
-//                        color = MaterialTheme.colorScheme.primary,
-//                        fontWeight = FontWeight.Bold
-//                    )
-//                    BasicTextField(
-//                        value = category.budgetLimit.toString(),
-//                        onValueChange = { if (it.all { c -> c.isDigit() }) onAmountChange(it) },
-//                        modifier = Modifier
-//                            .width(IntrinsicSize.Min)
-//                            .widthIn(min = 40.dp),
-//                        textStyle = MaterialTheme.typography.titleLarge.copy(
-//                            textAlign = TextAlign.End,
-//                            fontWeight = FontWeight.Bold
-//                        ),
-//                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-//                        decorationBox = { inner ->
-//                            if (category.budgetLimit.toString() == "0") Text(
-//                                "0",
-//                                style = MaterialTheme.typography.titleLarge,
-//                                color = Color.LightGray,
-//                                modifier = Modifier.fillMaxWidth(),
-//                                textAlign = TextAlign.End
-//                            )
-//                            inner()
-//                        }
-//                    )
-//                }
-//            }
-//
-//            Spacer(modifier = Modifier.height(12.dp))
-//
-//            // Way 2: Quick Budget Selectors (Presets)
-//            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-//                listOf("500", "1000", "5000").forEach { preset ->
-//                    AssistChip(
-//                        onClick = { onAmountChange(preset) },
-//                        label = { Text("Rs. $preset") },
-//                        shape = CircleShape,
-//                        colors = AssistChipDefaults.assistChipColors(containerColor = MaterialTheme.colorScheme.surface)
-//                    )
-//                }
-//            }
-//        }
-//    }
-//}
 
 fun getIconVector(iconName: String?): ImageVector {
     return when (iconName) {

@@ -48,18 +48,23 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tracker.personalbudgetplanner.R
+import com.tracker.personalbudgetplanner.ui.category.domain.Categories
 import com.tracker.personalbudgetplanner.ui.theme.PersonalBudgetPlannerTheme
+import com.tracker.personalbudgetplanner.utils.constants.DbConstants
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun AddCategorySheetRoot(
     viewModel: CategoriesViewModel = koinViewModel(),
+    editingCategory: Categories? = null,
     onDismiss: () -> Unit,
-    onSave: (name: String, iconId: Int, isExpense: Boolean) -> Unit
-) {
+    onSave: (category : Categories) -> Unit,
+
+    ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     AddCategorySheet(
         categoryState = state,
+        existingCategory = editingCategory,
         onDismiss = onDismiss,
         onSave = onSave
     )
@@ -69,12 +74,13 @@ fun AddCategorySheetRoot(
 @Composable
 fun AddCategorySheet(
     categoryState: CategoryState,
+    existingCategory: Categories? = null,
     onDismiss: () -> Unit,
-    onSave: (name: String, iconId: Int, isExpense: Boolean) -> Unit
+    onSave: (category: Categories) -> Unit
 ) {
-    var categoryName by remember { mutableStateOf("") }
-    var isExpense by remember { mutableStateOf(true) }
-    var selectedIconId by remember { mutableIntStateOf(0) }
+    var categoryName by remember { mutableStateOf(existingCategory?.name ?: "") }
+    var isExpense by remember { mutableStateOf(existingCategory?.type == DbConstants.category_expense) }
+    var selectedIconId by remember { mutableIntStateOf(existingCategory?.iconId ?: 0) }
     val sheetState = rememberModalBottomSheetState()
 
     ModalBottomSheet(
@@ -212,9 +218,12 @@ fun AddCategorySheet(
                 Button(
                     onClick = {
                         if (categoryName.isNotBlank()) onSave(
-                            categoryName,
-                            selectedIconId,
-                            isExpense
+                            Categories(
+                                id = existingCategory?.id,
+                                name = categoryName,
+                                iconId = selectedIconId,
+                                type = if (isExpense) DbConstants.category_expense else DbConstants.category_income
+                            )
                         )
                     },
                     modifier = Modifier
@@ -234,6 +243,6 @@ fun AddCategorySheet(
 @Composable()
 fun AddCategorySheetPreview() {
     PersonalBudgetPlannerTheme {
-        AddCategorySheet(CategoryState(), onDismiss = {}, onSave = { _, _, _ -> })
+        AddCategorySheet(CategoryState(), onDismiss = {}, onSave = { _ -> })
     }
 }

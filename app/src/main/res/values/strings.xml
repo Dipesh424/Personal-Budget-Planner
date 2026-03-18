@@ -19,4 +19,6 @@
     <string name="delete_category">Delete Category</string>
     <string name="confirm_category_delete">Are you sure you want to delete \"%1$s\"? All records linked to this category will be uncategorized.</string>
     <string name="delete">Delete</string>
+    <string name="categories">Categories</string>
+    <string name="manage_how_you_organize_your_money">Manage how you organize your money</string>
 </resources>
