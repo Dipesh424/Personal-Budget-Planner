@@ -8,4 +8,15 @@
     <string name="error_serialization">Couldn\'t parse data.</string>
     <string name="fuel_your_journey">Fuel your journey</string>
     <string name="what_is_your_average_monthly_income">What is your average monthly income?</string>
+    <string name="add_new_category">Add New Category</string>
+    <string name="save_category">Save Category</string>
+    <string name="select_icon">Select Icon</string>
+    <string name="new_category">New Category</string>
+    <string name="expense">Expense</string>
+    <string name="income">Income</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
+    <string name="delete_category">Delete Category</string>
+    <string name="confirm_category_delete">Are you sure you want to delete \"%1$s\"? All records linked to this category will be uncategorized.</string>
+    <string name="delete">Delete</string>
 </resources>

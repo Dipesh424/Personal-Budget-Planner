@@ -10,10 +10,12 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import com.tracker.personalbudgetplanner.features.dashboard.presentation.DashboardScreen
-import com.tracker.personalbudgetplanner.ui.budget_category.presentation.SetBudgetCategoryScreen
+import com.tracker.personalbudgetplanner.ui.category.presentation.CategoriesScreenRoot
+import com.tracker.personalbudgetplanner.ui.category.presentation.CategoriesViewModel
 import com.tracker.personalbudgetplanner.ui.income.presentation.IncomeSetupScreen
+import com.tracker.personalbudgetplanner.ui.main.presentation.MainScreen
 import com.tracker.personalbudgetplanner.ui.welcome.presentation.WelcomeScreen
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun NavigationRoot() {
@@ -33,7 +35,7 @@ fun NavigationRoot() {
                 entry<Routes.Welcome> {
                     WelcomeScreen {
                         backStack.remove(Routes.Welcome)
-                        backStack.add(Routes.OnBoarding)
+                        backStack.add(Routes.Main)
                     }
                 }
                 entry<Routes.OnBoarding> {
@@ -42,15 +44,12 @@ fun NavigationRoot() {
                     })
                 }
                 entry<Routes.SetCategoryBudget> {
-                    SetBudgetCategoryScreen(onFinish = {
-                        backStack.add(Routes.Dashboard)
-                    }, onSkip = {
-                        backStack.add(Routes.Dashboard)
-                    })
+                    val viewModel = koinViewModel<CategoriesViewModel>()
+                    CategoriesScreenRoot(viewModel)
                 }
 
-                entry<Routes.Dashboard> {
-                    DashboardScreen { }
+                entry<Routes.Main> {
+                    MainScreen()
                 }
             }
         )
