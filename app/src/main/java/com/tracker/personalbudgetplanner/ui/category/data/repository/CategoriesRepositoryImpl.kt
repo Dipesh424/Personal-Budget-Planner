@@ -21,9 +21,9 @@ class CategoriesRepositoryImpl(private val appDao: AppDao) : CategoriesRepositor
         }
     }
 
-    override suspend fun insertCategory(category: Categories): EmptyResult<DataError.Local> {
+    override suspend fun upsertCategory(category: Categories): EmptyResult<DataError.Local> {
         return try {
-            appDao.insertCategory(category.toCategoryEntity())
+            appDao.upsertCategory(category.toCategoryEntity())
             Result.Success(Unit)
         } catch (e: SQLiteException) {
             Result.Error(DataError.Local.DISK_FULL)

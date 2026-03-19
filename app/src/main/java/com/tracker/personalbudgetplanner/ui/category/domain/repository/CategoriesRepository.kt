@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface CategoriesRepository {
     fun getCategories(): Flow<List<Categories>>
-    suspend fun insertCategory(category: Categories): EmptyResult<DataError.Local>
+    suspend fun upsertCategory(category: Categories): EmptyResult<DataError.Local>
     fun getCategoryIcons(): Flow<List<CategoryIcon>>
     suspend fun deleteCategory(category: Categories): EmptyResult<DataError.Local>
 }

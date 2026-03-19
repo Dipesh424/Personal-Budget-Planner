@@ -1,5 +1,6 @@
 package com.tracker.personalbudgetplanner.di
 
+import com.tracker.personalbudgetplanner.ui.budget.presentation.BudgetViewModel
 import com.tracker.personalbudgetplanner.ui.category.data.repository.CategoriesRepositoryImpl
 import com.tracker.personalbudgetplanner.ui.category.domain.repository.CategoriesRepository
 import com.tracker.personalbudgetplanner.ui.category.presentation.CategoriesViewModel
@@ -11,4 +12,5 @@ import org.koin.dsl.module
 val repositoryModule = module {
     singleOf(::CategoriesRepositoryImpl).bind<CategoriesRepository>()
     viewModelOf(::CategoriesViewModel)
+    viewModelOf(::BudgetViewModel)
 }
