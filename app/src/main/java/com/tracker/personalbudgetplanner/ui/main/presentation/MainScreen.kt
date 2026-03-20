@@ -28,10 +28,12 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import com.tracker.personalbudgetplanner.ui.dashboard.presentation.DashboardScreen
 import com.tracker.personalbudgetplanner.navigation.BottomNavKey
+import com.tracker.personalbudgetplanner.ui.budget.presentation.BudgetScreenRoot
+import com.tracker.personalbudgetplanner.ui.budget.presentation.BudgetViewModel
 import com.tracker.personalbudgetplanner.ui.category.presentation.CategoriesScreenRoot
 import com.tracker.personalbudgetplanner.ui.category.presentation.CategoriesViewModel
+import com.tracker.personalbudgetplanner.ui.dashboard.presentation.DashboardScreen
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -102,7 +104,6 @@ fun MainScreen() {
                 containerColor = MaterialTheme.colorScheme.surface,
                 tonalElevation = 0.dp,
                 modifier = Modifier.graphicsLayer {
-                    // Optional: Adds a very fine border at the top for separation
                     shadowElevation = 8f
                 }
             ) {
@@ -156,7 +157,7 @@ fun MainScreen() {
         }
     ) { innerPadding ->
         NavDisplay(
-            modifier = Modifier.padding(innerPadding),
+            modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding()),
             backStack = currentBackStack, entryDecorators = listOf(
                 rememberSaveableStateHolderNavEntryDecorator(),
                 rememberViewModelStoreNavEntryDecorator()
@@ -169,7 +170,8 @@ fun MainScreen() {
 
                 }
                 entry<BottomNavKey.Budget> {
-
+                    val viewModel = koinViewModel<BudgetViewModel>()
+                    BudgetScreenRoot(viewModel)
                 }
 
                 entry<BottomNavKey.Categories> {

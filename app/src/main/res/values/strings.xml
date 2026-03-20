@@ -21,4 +21,8 @@
     <string name="delete">Delete</string>
     <string name="categories">Categories</string>
     <string name="manage_how_you_organize_your_money">Manage how you organize your money</string>
+    <string name="set_budget">Set Budget</string>
+    <string name="add_to_budget">Add to Budget</string>
+    <string name="currently_no_budget_set_for_this_month">Currently no budget set for this month</string>
+    <string name="active_budgets">Active Budgets</string>
 </resources>
