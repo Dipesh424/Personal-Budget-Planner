@@ -19,22 +19,33 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,6 +53,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -60,6 +73,30 @@ import java.util.Locale
 @Composable
 fun BudgetScreenRoot(viewModel: BudgetViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    var categoryForAddBudget by remember { mutableStateOf<Categories?>(null) }
+    var categoryToEditForBudget by remember { mutableStateOf<Categories?>(null) }
+
+    LaunchedEffect(state.currentDate) {
+        viewModel.getBudgetedAndUnBudgetedCategories(
+            month = state.currentDate.monthValue,
+            year = state.currentDate.year
+        )
+    }
+
+    if (categoryForAddBudget != null || categoryToEditForBudget != null) {
+        SetBudgetBottomSheet(
+            category = categoryForAddBudget ?: categoryToEditForBudget,
+            state.currentDate,
+            onDismiss = {
+                categoryForAddBudget = null
+                categoryToEditForBudget = null
+            }, onSave = {
+                categoryForAddBudget = null
+                categoryToEditForBudget = null
+            }
+        )
+    }
+
     BudgetScreen(
         state = state,
         onPreviousMonth = {
@@ -68,8 +105,12 @@ fun BudgetScreenRoot(viewModel: BudgetViewModel = koinViewModel()) {
         onNextMonth = {
             viewModel.onMoveMonth(1)
         },
-        onSetBudget = {},
-        onEditBudget = { _, _ -> })
+        onSetBudget = { categories ->
+            categoryForAddBudget = categories
+        },
+        onEditBudget = { categories, limit ->
+            categoryToEditForBudget = categories
+        })
 
 }
 
@@ -115,7 +156,8 @@ fun BudgetScreen(
             BudgetList(
                 budgetedCategories = state.budgetedCategories,
                 unbudgetedCategories = state.unbudgetedCategories,
-                onSetBudget = {})
+                onSetBudget = onSetBudget
+            )
         }
     }
 }
@@ -196,7 +238,7 @@ fun BudgetSummaryCard(totalBudget: Double, totalSpent: Double) {
 fun BudgetList(
     budgetedCategories: List<BudgetCategories>,
     unbudgetedCategories: List<Categories>,
-    onSetBudget: (Categories) -> Unit
+    onSetBudget: (Categories) -> Unit,
 ) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         item { SectionHeader(stringResource(R.string.active_budgets)) }
@@ -306,7 +348,9 @@ fun BudgetRow(
                 BudgetStatColumn(
                     label = if (isOverspent) "Over" else "Remaining",
                     value = "$${if (isOverspent) (item.spentAmount - item.budgetAmount).toInt() else remainingAmount.toInt()}",
-                    color = if (isOverspent) MaterialTheme.colorScheme.error else Color(0xFF4CAF50) // Green for healthy remaining
+                    color = if (isOverspent) MaterialTheme.colorScheme.error else Color(
+                        0xFF4CAF50
+                    ) // Green for healthy remaining
                 )
             }
 
@@ -384,7 +428,10 @@ fun UnbudgetedRow(category: Categories, onSetBudget: (Categories) -> Unit) {
         OutlinedButton(
             onClick = { onSetBudget(category) }, shape = RoundedCornerShape(12.dp)
         ) {
-            Text(stringResource(R.string.set_budget), style = MaterialTheme.typography.labelMedium)
+            Text(
+                stringResource(R.string.set_budget),
+                style = MaterialTheme.typography.labelMedium
+            )
         }
     }
 }
@@ -425,6 +472,120 @@ fun SectionHeader(
                     )
                 )
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SetBudgetBottomSheet(
+    category: Categories?,
+    currentDate: LocalDate,
+    onDismiss: () -> Unit,
+    onSave: (Double) -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var amountText by remember { mutableStateOf("") }
+
+    // Format month for display
+    val monthName = currentDate.month.getDisplayName(TextStyle.FULL, Locale.getDefault())
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        dragHandle = { BottomSheetDefaults.DragHandle() },
+        containerColor = MaterialTheme.colorScheme.surface
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Set Budget",
+                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Category Info Section
+            Surface(
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = getIconVector(category?.iconName),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = category?.name ?: "",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = "$monthName, ${currentDate.year}",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Numeric TextField
+            OutlinedTextField(
+                value = amountText,
+                onValueChange = {
+                    if (it.all { char -> char.isDigit() || char == '.' }) amountText = it
+                },
+                label = { Text("Limit Amount") },
+                placeholder = { Text("0.00") },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Decimal,
+                    imeAction = ImeAction.Done
+                ),
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp)
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Action Buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(stringResource(R.string.cancel))
+                }
+
+                Button(
+                    onClick = {
+                        val amount = amountText.toDoubleOrNull() ?: 0.0
+                        if (amount > 0) onSave(amount)
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = amountText.isNotEmpty()
+                ) {
+                    Text(text = stringResource(R.string.set_budget))
+                }
+            }
+        }
     }
 }
 
