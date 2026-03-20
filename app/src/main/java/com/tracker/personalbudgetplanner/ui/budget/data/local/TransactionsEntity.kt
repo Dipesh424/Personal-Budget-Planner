@@ -1,38 +1,30 @@
 package com.tracker.personalbudgetplanner.ui.budget.data.local
 
-import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.tracker.personalbudgetplanner.ui.category.data.local.CategoryEntity
-import com.tracker.personalbudgetplanner.ui.category.data.local.CategoryWithIcon
 import com.tracker.personalbudgetplanner.utils.constants.DbConstants
 
 @Entity(
-    tableName = DbConstants.table_budgets,
+    tableName = DbConstants.table_transactions,
     foreignKeys = [
         ForeignKey(
             entity = CategoryEntity::class,
             parentColumns = ["id"],
             childColumns = ["categoryId"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.CASCADE // If category is deleted, delete its spending too
         )
     ],
-    indices = [Index(value = ["categoryId", "month", "year"], unique = true)]
+    indices = [Index("categoryId")]
 )
-data class BudgetEntity(
+data class TransactionEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val categoryId: Int,
     val amount: Double,
-    val month: Int,
-    val year: Int
-)
-
-data class CategoryWithBudget(
-    @Embedded val categoryWithIcon: CategoryWithIcon,
-    val budgetAmount: Double,
-//    val spentAmount: Double,
+    val note: String,
+    val timestamp: Long,
     val month: Int,
     val year: Int
 )

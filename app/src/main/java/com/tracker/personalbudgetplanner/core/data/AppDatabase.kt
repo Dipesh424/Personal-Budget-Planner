@@ -11,7 +11,7 @@ import com.tracker.personalbudgetplanner.ui.category.data.local.IconEntity
         CategoryEntity::class,
         IconEntity::class,
         BudgetEntity::class
-    ], version = 2
+    ], version = 1
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun appDao(): AppDao
