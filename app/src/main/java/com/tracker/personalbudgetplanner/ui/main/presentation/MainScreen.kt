@@ -3,7 +3,6 @@ package com.tracker.personalbudgetplanner.ui.main.presentation
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +39,7 @@ import com.tracker.personalbudgetplanner.ui.category.presentation.CategoriesScre
 import com.tracker.personalbudgetplanner.ui.category.presentation.CategoriesViewModel
 import com.tracker.personalbudgetplanner.ui.dashboard.presentation.DashboardScreen
 import com.tracker.personalbudgetplanner.ui.dashboard.presentation.RecentActivityScreen
+import com.tracker.personalbudgetplanner.ui.settings.presentation.SettingsScreen
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -191,6 +191,7 @@ fun MainScreen() {
                 }
 
                 entry<BottomNavKey.Settings> {
+                    SettingsScreen()
                 }
 
                 entry<Routes.RecentActivity> {

@@ -12,7 +12,6 @@ import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.rounded.AccountBalanceWallet
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -23,9 +22,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tracker.personalbudgetplanner.R
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -78,20 +79,12 @@ fun DashboardScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        "My Payments", 
+                        stringResource(R.string.app_name), 
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.5.sp
                         )
                     )
-                },
-                actions = {
-                    IconButton(onClick = { showDatePicker = true }) {
-                        Icon(
-                            imageVector = Icons.Default.CalendarMonth,
-                            contentDescription = "Select Date"
-                        )
-                    }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = Color.Transparent
@@ -122,7 +115,8 @@ fun DashboardScreen(
                 MonthSelectorModern(
                     currentMonthLabel = selectedDate.format(monthYearFormatter),
                     onPrevious = { selectedDate = selectedDate.minusMonths(1) },
-                    onNext = { selectedDate = selectedDate.plusMonths(1) }
+                    onNext = { selectedDate = selectedDate.plusMonths(1) },
+                    onDateClick = { showDatePicker = true }
                 )
             }
 
@@ -184,7 +178,8 @@ fun DashboardScreen(
 fun MonthSelectorModern(
     currentMonthLabel: String, 
     onPrevious: () -> Unit, 
-    onNext: () -> Unit
+    onNext: () -> Unit,
+    onDateClick: () -> Unit
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -201,7 +196,11 @@ fun MonthSelectorModern(
             }
             Text(
                 text = currentMonthLabel,
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { onDateClick() }
+                    .padding(horizontal = 12.dp, vertical = 4.dp)
             )
             IconButton(onClick = onNext) {
                 Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = "Next", modifier = Modifier.size(28.dp))
