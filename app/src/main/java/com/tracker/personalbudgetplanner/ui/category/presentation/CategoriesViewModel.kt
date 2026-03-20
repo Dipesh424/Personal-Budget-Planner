@@ -7,8 +7,8 @@ import com.tracker.personalbudgetplanner.ui.category.domain.repository.Categorie
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -17,36 +17,32 @@ import kotlinx.coroutines.launch
 class CategoriesViewModel(private val categoriesRepository: CategoriesRepository) : ViewModel() {
     private val _state = MutableStateFlow(CategoryState())
     val state = _state.onStart {
-        observeCategories()
-        getCategoryIcons()
+        observeCategoryAndIcons()
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000L),
         initialValue = _state.value
     )
 
-    private var observeCategoriesJob: Job? = null
-    private var getCategoryIconsJob: Job? = null
-
-    fun observeCategories() {
-        observeCategoriesJob?.cancel()
-        observeCategoriesJob = categoriesRepository.getCategories()
-            .onEach { categories ->
-                _state.update { it.copy(categories = categories) }
-            }.launchIn(viewModelScope)
+    fun observeCategoryAndIcons() {
+        _state.update { it.copy(isLoading = true) }
+        combine(
+            categoriesRepository.getCategories(),
+            categoriesRepository.getCategoryIcons()
+        ) { categories, icons ->
+            _state.update {
+                it.copy(
+                    categories = categories,
+                    icons = icons,
+                    isLoading = false
+                )
+            }
+        }.launchIn(viewModelScope)
     }
 
-    fun getCategoryIcons() {
-        getCategoryIconsJob?.cancel()
-        getCategoryIconsJob = categoriesRepository.getCategoryIcons()
-            .onEach { icons ->
-                _state.update { it.copy(icons = icons) }
-            }.launchIn(viewModelScope)
-    }
-
-    fun addNewCategory(category: Categories) {
+    fun upsertCategory(category: Categories) {
         viewModelScope.launch {
-            categoriesRepository.insertCategory(category)
+            categoriesRepository.upsertCategory(category)
         }
     }
 

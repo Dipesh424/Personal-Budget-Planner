@@ -11,11 +11,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetDefaults
@@ -37,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,18 +51,24 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tracker.personalbudgetplanner.R
+import com.tracker.personalbudgetplanner.ui.category.domain.Categories
 import com.tracker.personalbudgetplanner.ui.theme.PersonalBudgetPlannerTheme
+import com.tracker.personalbudgetplanner.utils.constants.DbConstants
+import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun AddCategorySheetRoot(
     viewModel: CategoriesViewModel = koinViewModel(),
+    editingCategory: Categories? = null,
     onDismiss: () -> Unit,
-    onSave: (name: String, iconId: Int, isExpense: Boolean) -> Unit
-) {
+    onSave: (category: Categories) -> Unit,
+
+    ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     AddCategorySheet(
         categoryState = state,
+        existingCategory = editingCategory,
         onDismiss = onDismiss,
         onSave = onSave
     )
@@ -69,23 +78,34 @@ fun AddCategorySheetRoot(
 @Composable
 fun AddCategorySheet(
     categoryState: CategoryState,
+    existingCategory: Categories? = null,
     onDismiss: () -> Unit,
-    onSave: (name: String, iconId: Int, isExpense: Boolean) -> Unit
+    onSave: (category: Categories) -> Unit
 ) {
-    var categoryName by remember { mutableStateOf("") }
-    var isExpense by remember { mutableStateOf(true) }
-    var selectedIconId by remember { mutableIntStateOf(0) }
-    val sheetState = rememberModalBottomSheetState()
+    var categoryName by remember { mutableStateOf(existingCategory?.name ?: "") }
+    var isExpense by remember { mutableStateOf(existingCategory?.type == DbConstants.category_expense) }
+    var selectedIconId by remember { mutableIntStateOf(existingCategory?.iconId ?: 0) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scrollState = rememberLazyGridState()
+    val scope = rememberCoroutineScope()
+    val animateAndDismiss = {
+        scope.launch {
+            sheetState.hide()
+        }.invokeOnCompletion {
+            onDismiss()
+        }
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = MaterialTheme.colorScheme.surface,
-        dragHandle = { BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.outlineVariant) }
+        dragHandle = { BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.outlineVariant) },
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .navigationBarsPadding()
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 40.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
@@ -154,6 +174,7 @@ fun AddCategorySheet(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 LazyVerticalGrid(
+                    state = scrollState,
                     columns = GridCells.Fixed(5),
                     modifier = Modifier.height(200.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -190,7 +211,7 @@ fun AddCategorySheet(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 OutlinedButton(
-                    onClick = onDismiss,
+                    onClick = {animateAndDismiss()},
                     modifier = Modifier
                         .weight(1f)
                         .height(56.dp),
@@ -212,9 +233,12 @@ fun AddCategorySheet(
                 Button(
                     onClick = {
                         if (categoryName.isNotBlank()) onSave(
-                            categoryName,
-                            selectedIconId,
-                            isExpense
+                            Categories(
+                                id = existingCategory?.id,
+                                name = categoryName,
+                                iconId = selectedIconId,
+                                type = if (isExpense) DbConstants.category_expense else DbConstants.category_income
+                            )
                         )
                     },
                     modifier = Modifier
@@ -234,6 +258,6 @@ fun AddCategorySheet(
 @Composable()
 fun AddCategorySheetPreview() {
     PersonalBudgetPlannerTheme {
-        AddCategorySheet(CategoryState(), onDismiss = {}, onSave = { _, _, _ -> })
+        AddCategorySheet(CategoryState(), onDismiss = {}, onSave = { _ -> })
     }
 }
