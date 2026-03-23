@@ -1,8 +1,6 @@
 package com.tracker.personalbudgetplanner.navigation
 
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -21,37 +19,35 @@ import org.koin.compose.viewmodel.koinViewModel
 fun NavigationRoot() {
     val backStack = rememberNavBackStack(Routes.Welcome)
 
-    Scaffold() { innerPadding ->
-        NavDisplay(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            entryDecorators = listOf(
-                rememberSaveableStateHolderNavEntryDecorator(),
-                rememberViewModelStoreNavEntryDecorator()
-
-            ), backStack = backStack,
-            entryProvider = entryProvider {
-                entry<Routes.Welcome> {
-                    WelcomeScreen {
-                        backStack.remove(Routes.Welcome)
-                        backStack.add(Routes.Main)
-                    }
-                }
-                entry<Routes.OnBoarding> {
-                    IncomeSetupScreen(onContinue = { _, _ ->
-                        backStack.add(Routes.SetCategoryBudget)
-                    })
-                }
-                entry<Routes.SetCategoryBudget> {
-                    val viewModel = koinViewModel<CategoriesViewModel>()
-                    CategoriesScreenRoot(viewModel)
-                }
-
-                entry<Routes.Main> {
-                    MainScreen()
+    // Removed Scaffold here to allow individual screens to handle their own insets
+    // This fixes the "gap" below the bottom navigation bar in MainScreen
+    NavDisplay(
+        modifier = Modifier.fillMaxSize(),
+        entryDecorators = listOf(
+            rememberSaveableStateHolderNavEntryDecorator(),
+            rememberViewModelStoreNavEntryDecorator()
+        ),
+        backStack = backStack,
+        entryProvider = entryProvider {
+            entry<Routes.Welcome> {
+                WelcomeScreen {
+                    backStack.remove(Routes.Welcome)
+                    backStack.add(Routes.Main)
                 }
             }
-        )
-    }
+            entry<Routes.OnBoarding> {
+                IncomeSetupScreen(onContinue = { _, _ ->
+                    backStack.add(Routes.SetCategoryBudget)
+                })
+            }
+            entry<Routes.SetCategoryBudget> {
+                val viewModel = koinViewModel<CategoriesViewModel>()
+                CategoriesScreenRoot(viewModel)
+            }
+
+            entry<Routes.Main> {
+                MainScreen()
+            }
+        }
+    )
 }

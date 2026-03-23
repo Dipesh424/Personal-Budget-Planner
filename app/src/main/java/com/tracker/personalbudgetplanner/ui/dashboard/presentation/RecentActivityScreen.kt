@@ -11,9 +11,11 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -23,9 +25,18 @@ fun RecentActivityScreen(
     var searchQuery by remember { mutableStateOf("") }
     
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
-                title = { Text("Recent Activity", fontWeight = FontWeight.Bold) },
+            CenterAlignedTopAppBar(
+                title = { 
+                    Text(
+                        "Recent Activity", 
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.5.sp
+                        )
+                    ) 
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -35,7 +46,10 @@ fun RecentActivityScreen(
                     IconButton(onClick = { /* TODO: Filter */ }) {
                         Icon(Icons.Default.FilterList, contentDescription = "Filter")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color.Transparent
+                )
             )
         }
     ) { padding ->
@@ -43,30 +57,49 @@ fun RecentActivityScreen(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .padding(horizontal = 16.dp)
         ) {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Search transactions...") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                shape = RoundedCornerShape(12.dp)
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
+            // Search Bar
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            ) {
+                TextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text("Search transactions...", style = MaterialTheme.typography.bodyMedium) },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(20.dp)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        disabledContainerColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                    ),
+                    singleLine = true
+                )
+            }
             
             LazyColumn(
+                modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(bottom = 16.dp)
+                contentPadding = PaddingValues(16.dp)
             ) {
-                // Mock data for now
+                // Mock data
                 val transactions = List(20) { index ->
                     TransactionData(
-                        category = if (index % 3 == 0) "Food" else if (index % 3 == 1) "Rent" else "Salary",
-                        date = "24 Feb 2026",
-                        amount = if (index % 3 == 2) "+ Rs. 20,000" else "- Rs. ${100 * (index + 1)}",
-                        isExpense = index % 3 != 2
+                        category = when (index % 4) {
+                            0 -> "Grocery"
+                            1 -> "Entertainment"
+                            2 -> "Salary"
+                            else -> "Utilities"
+                        },
+                        date = "${24 - (index / 2)} Feb 2026",
+                        amount = if (index % 4 == 2) "+ Rs. ${5000 + (index * 100)}" else "- Rs. ${100 * (index + 1)}",
+                        isExpense = index % 4 != 2
                     )
                 }
                 
@@ -88,7 +121,6 @@ fun RecentActivityScreen(
 fun RecentActivityScreenPreview() {
     RecentActivityScreen(onBack = {})
 }
-
 
 data class TransactionData(
     val category: String,
