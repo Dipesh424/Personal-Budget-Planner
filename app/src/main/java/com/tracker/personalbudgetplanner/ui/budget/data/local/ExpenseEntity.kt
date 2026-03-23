@@ -8,7 +8,7 @@ import com.tracker.personalbudgetplanner.ui.category.data.local.CategoryEntity
 import com.tracker.personalbudgetplanner.utils.constants.DbConstants
 
 @Entity(
-    tableName = DbConstants.table_transactions,
+    tableName = DbConstants.table_expenses,
     foreignKeys = [
         ForeignKey(
             entity = CategoryEntity::class,
@@ -19,7 +19,7 @@ import com.tracker.personalbudgetplanner.utils.constants.DbConstants
     ],
     indices = [Index("categoryId")]
 )
-data class TransactionEntity(
+data class ExpenseEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val categoryId: Int,
     val amount: Double,

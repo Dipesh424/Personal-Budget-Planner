@@ -23,11 +23,17 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -45,6 +51,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,10 +68,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tracker.personalbudgetplanner.R
+import com.tracker.personalbudgetplanner.core.presentation.AppAlertDialog
+import com.tracker.personalbudgetplanner.ui.budget.domain.Budget
 import com.tracker.personalbudgetplanner.ui.budget.domain.BudgetCategories
 import com.tracker.personalbudgetplanner.ui.category.domain.Categories
 import com.tracker.personalbudgetplanner.ui.category.presentation.getIconVector
 import com.tracker.personalbudgetplanner.ui.theme.PersonalBudgetPlannerTheme
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import java.time.LocalDate
 import java.time.format.TextStyle
@@ -74,7 +84,8 @@ import java.util.Locale
 fun BudgetScreenRoot(viewModel: BudgetViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var categoryForAddBudget by remember { mutableStateOf<Categories?>(null) }
-    var categoryToEditForBudget by remember { mutableStateOf<Categories?>(null) }
+    var categoryToEditForBudget by remember { mutableStateOf<BudgetCategories?>(null) }
+    var budgetToDelete by remember { mutableStateOf<BudgetCategories?>(null) }
 
     LaunchedEffect(state.currentDate) {
         viewModel.getBudgetedAndUnBudgetedCategories(
@@ -83,14 +94,31 @@ fun BudgetScreenRoot(viewModel: BudgetViewModel = koinViewModel()) {
         )
     }
 
+    budgetToDelete?.let { budget ->
+        AppAlertDialog(
+            onDismissRequest = { budgetToDelete = null },
+            onConfirm = {
+                viewModel.deleteBudgetById(budget.budgetId ?: -1)
+                budgetToDelete = null
+            },
+            title = stringResource(R.string.remove_budget),
+            description = stringResource(R.string.budget_remove_confirmation, budget.category.name),
+            confirmText = stringResource(R.string.remove),
+            isDestructive = true,
+            icon = Icons.Default.DeleteForever
+        )
+    }
+
     if (categoryForAddBudget != null || categoryToEditForBudget != null) {
         SetBudgetBottomSheet(
-            category = categoryForAddBudget ?: categoryToEditForBudget,
-            state.currentDate,
+            category = categoryForAddBudget,
+            budgetCategories = categoryToEditForBudget,
+            currentDate = state.currentDate,
             onDismiss = {
                 categoryForAddBudget = null
                 categoryToEditForBudget = null
-            }, onSave = {
+            }, onSave = { budget ->
+                viewModel.upsertBudget(budget)
                 categoryForAddBudget = null
                 categoryToEditForBudget = null
             }
@@ -108,8 +136,10 @@ fun BudgetScreenRoot(viewModel: BudgetViewModel = koinViewModel()) {
         onSetBudget = { categories ->
             categoryForAddBudget = categories
         },
-        onEditBudget = { categories, limit ->
+        onEditBudget = { categories ->
             categoryToEditForBudget = categories
+        }, onDeleteClick = { budget ->
+            budgetToDelete = budget
         })
 
 }
@@ -120,8 +150,12 @@ fun BudgetScreen(
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
     onSetBudget: (Categories) -> Unit,
-    onEditBudget: (Categories, Double) -> Unit
+    onEditBudget: (BudgetCategories) -> Unit,
+    onDeleteClick: (BudgetCategories) -> Unit
 ) {
+    val totalBudget = state.budgetedCategories.sumOf { it.budgetAmount }
+    val totalSpent = state.budgetedCategories.sumOf { it.spentAmount }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -149,15 +183,28 @@ fun BudgetScreen(
                 onNextMonth = onNextMonth
             )
 
-            BudgetSummaryCard(
-                totalBudget = 100.0, totalSpent = 90.0
-            )
+            if (state.isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                BudgetSummaryCard(
+                    totalBudget = totalBudget, totalSpent = totalSpent
+                )
 
-            BudgetList(
-                budgetedCategories = state.budgetedCategories,
-                unbudgetedCategories = state.unbudgetedCategories,
-                onSetBudget = onSetBudget
-            )
+                BudgetList(
+                    budgetedCategories = state.budgetedCategories,
+                    unbudgetedCategories = state.unbudgetedCategories,
+                    onSetBudget = onSetBudget,
+                    onEditBudget = onEditBudget,
+                    onDeleteClick = onDeleteClick
+                )
+            }
         }
     }
 }
@@ -206,7 +253,7 @@ fun BudgetSummaryCard(totalBudget: Double, totalSpent: Double) {
         Column(modifier = Modifier.padding(24.dp)) {
             Text("Total Budget", style = MaterialTheme.typography.labelLarge)
             Text(
-                "$${totalBudget}",
+                "Rs.${totalBudget}",
                 style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Black)
             )
 
@@ -227,7 +274,7 @@ fun BudgetSummaryCard(totalBudget: Double, totalSpent: Double) {
                     .padding(top = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Spent: $${totalSpent}", style = MaterialTheme.typography.bodyMedium)
+                Text("Spent: Rs.${totalSpent}", style = MaterialTheme.typography.bodyMedium)
                 Text("${(progress * 100).toInt()}%", fontWeight = FontWeight.Bold)
             }
         }
@@ -239,6 +286,8 @@ fun BudgetList(
     budgetedCategories: List<BudgetCategories>,
     unbudgetedCategories: List<Categories>,
     onSetBudget: (Categories) -> Unit,
+    onEditBudget: (BudgetCategories) -> Unit,
+    onDeleteClick: (BudgetCategories) -> Unit,
 ) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         item { SectionHeader(stringResource(R.string.active_budgets)) }
@@ -256,7 +305,7 @@ fun BudgetList(
             }
         } else {
             items(budgetedCategories) { item ->
-                BudgetRow(item, onEditClick = {}, onDeleteClick = {})
+                BudgetRow(item, onEditClick = onEditBudget, onDeleteClick = onDeleteClick)
             }
         }
 
@@ -274,12 +323,15 @@ fun BudgetList(
 @Composable
 fun BudgetRow(
     item: BudgetCategories,
-    onEditClick: () -> Unit,
-    onDeleteClick: () -> Unit
+    onEditClick: (BudgetCategories) -> Unit,
+    onDeleteClick: (BudgetCategories) -> Unit
 ) {
     val progress = (item.spentAmount / item.budgetAmount).toFloat()
     val isOverspent = item.spentAmount > item.budgetAmount
     val remainingAmount = (item.budgetAmount - item.spentAmount).coerceAtLeast(0.0)
+
+    // State to control the visibility of the dropdown menu
+    var showMenu by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier
@@ -318,13 +370,55 @@ fun BudgetRow(
                     modifier = Modifier.weight(1f)
                 )
 
-                // The 3-Dots Menu Placeholder
-                IconButton(onClick = onEditClick) {
-                    Icon(
-                        imageVector = Icons.Default.MoreHoriz,
-                        contentDescription = "Options",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                // The 3-Dots Menu Implementation
+                Box {
+                    IconButton(onClick = { showMenu = true }) {
+                        Icon(
+                            imageVector = Icons.Default.MoreHoriz,
+                            contentDescription = "Options",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Update Limit") },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Default.Edit,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            },
+                            onClick = {
+                                showMenu = false
+                                onEditClick(item)
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    "Remove Budget",
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Default.Delete,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            },
+                            onClick = {
+                                showMenu = false
+                                onDeleteClick(item)
+                            }
+                        )
+                    }
                 }
             }
 
@@ -336,21 +430,19 @@ fun BudgetRow(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 BudgetStatColumn(
-                    "Limit",
-                    "$${item.budgetAmount.toInt()}",
-                    MaterialTheme.colorScheme.onSurface
+                    label = "Limit",
+                    value = "Rs.${item.budgetAmount.toInt()}",
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 BudgetStatColumn(
-                    "Spent",
-                    "$${item.spentAmount.toInt()}",
-                    if (isOverspent) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+                    label = "Spent",
+                    value = "Rs.${item.spentAmount.toInt()}",
+                    color = if (isOverspent) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
                 )
                 BudgetStatColumn(
                     label = if (isOverspent) "Over" else "Remaining",
-                    value = "$${if (isOverspent) (item.spentAmount - item.budgetAmount).toInt() else remainingAmount.toInt()}",
-                    color = if (isOverspent) MaterialTheme.colorScheme.error else Color(
-                        0xFF4CAF50
-                    ) // Green for healthy remaining
+                    value = "Rs.${if (isOverspent) (item.spentAmount - item.budgetAmount).toInt() else remainingAmount.toInt()}",
+                    color = if (isOverspent) MaterialTheme.colorScheme.error else Color(0xFF4CAF50)
                 )
             }
 
@@ -386,6 +478,7 @@ fun BudgetRow(
         }
     }
 }
+
 
 @Composable
 fun BudgetStatColumn(label: String, value: String, color: Color) {
@@ -426,7 +519,9 @@ fun UnbudgetedRow(category: Categories, onSetBudget: (Categories) -> Unit) {
         )
 
         OutlinedButton(
-            onClick = { onSetBudget(category) }, shape = RoundedCornerShape(12.dp)
+            onClick = {
+                onSetBudget(category)
+            }, shape = RoundedCornerShape(12.dp)
         ) {
             Text(
                 stringResource(R.string.set_budget),
@@ -479,16 +574,22 @@ fun SectionHeader(
 @Composable
 fun SetBudgetBottomSheet(
     category: Categories?,
+    budgetCategories: BudgetCategories?,
     currentDate: LocalDate,
     onDismiss: () -> Unit,
-    onSave: (Double) -> Unit
+    onSave: (Budget) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var amountText by remember { mutableStateOf("") }
-
-    // Format month for display
+    val scope = rememberCoroutineScope()
+    var amountText by remember { mutableStateOf(budgetCategories?.budgetAmount?.toString() ?: "") }
     val monthName = currentDate.month.getDisplayName(TextStyle.FULL, Locale.getDefault())
-
+    val animateAndDismiss = {
+        scope.launch {
+            sheetState.hide()
+        }.invokeOnCompletion {
+            onDismiss()
+        }
+    }
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
@@ -503,7 +604,7 @@ fun SetBudgetBottomSheet(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Set Budget",
+                text = stringResource(R.string.set_budget),
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
             )
 
@@ -520,7 +621,9 @@ fun SetBudgetBottomSheet(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = getIconVector(category?.iconName),
+                        imageVector = getIconVector(
+                            category?.iconName ?: budgetCategories?.category?.iconName
+                        ),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(24.dp)
@@ -547,8 +650,8 @@ fun SetBudgetBottomSheet(
                 onValueChange = {
                     if (it.all { char -> char.isDigit() || char == '.' }) amountText = it
                 },
-                label = { Text("Limit Amount") },
-                placeholder = { Text("0.00") },
+                label = { Text(stringResource(R.string.limit)) },
+                placeholder = { Text(stringResource(R.string._0_00)) },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Decimal,
@@ -566,7 +669,7 @@ fun SetBudgetBottomSheet(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 OutlinedButton(
-                    onClick = onDismiss,
+                    onClick = { animateAndDismiss() },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -576,7 +679,15 @@ fun SetBudgetBottomSheet(
                 Button(
                     onClick = {
                         val amount = amountText.toDoubleOrNull() ?: 0.0
-                        if (amount > 0) onSave(amount)
+                        if (amount > 0) onSave(
+                            Budget(
+                                id = budgetCategories?.budgetId,
+                                categoryId = category?.id ?: budgetCategories?.category?.id ?: -1,
+                                amount = amount,
+                                month = currentDate.monthValue,
+                                year = currentDate.year
+                            )
+                        )
                     },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
@@ -598,7 +709,7 @@ fun BudgetScreenPreview() {
             onPreviousMonth = {},
             onNextMonth = {},
             onSetBudget = {},
-            onEditBudget = { _, _ -> })
+            onEditBudget = {}, onDeleteClick = {})
     }
 }
 

@@ -83,7 +83,9 @@ fun AddCategorySheet(
     onSave: (category: Categories) -> Unit
 ) {
     var categoryName by remember { mutableStateOf(existingCategory?.name ?: "") }
-    var isExpense by remember { mutableStateOf(existingCategory?.type == DbConstants.category_expense) }
+    var isExpense by remember {
+        mutableStateOf(existingCategory?.type?.let { it == DbConstants.category_expense } ?: true)
+    }
     var selectedIconId by remember { mutableIntStateOf(existingCategory?.iconId ?: 0) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scrollState = rememberLazyGridState()

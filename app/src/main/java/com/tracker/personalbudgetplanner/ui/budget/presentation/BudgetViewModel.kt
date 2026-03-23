@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tracker.personalbudgetplanner.ui.budget.domain.Budget
 import com.tracker.personalbudgetplanner.ui.budget.domain.repository.BudgetRepository
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -27,6 +28,8 @@ class BudgetViewModel(private val repository: BudgetRepository) : ViewModel() {
         initialValue = _state.value
     )
 
+    private var getBudgetedAndUnBudgetedCategoriesJob: Job? = null
+
     fun upsertBudget(budget: Budget) {
         viewModelScope.launch {
             repository.upsertBudget(budget)
@@ -34,16 +37,17 @@ class BudgetViewModel(private val repository: BudgetRepository) : ViewModel() {
     }
 
     fun getBudgetedAndUnBudgetedCategories(month: Int, year: Int) {
+        getBudgetedAndUnBudgetedCategoriesJob?.cancel()
         _state.update { it.copy(isLoading = true) }
-        combine(
+        getBudgetedAndUnBudgetedCategoriesJob = combine(
             repository.getBudgetedCategories(month, year),
             repository.getUnBudgetedCategories(month, year)
         ) { budgetedCategories, unbudgetedCategories ->
             _state.update {
                 it.copy(
-                    isLoading = false,
                     budgetedCategories = budgetedCategories,
-                    unbudgetedCategories = unbudgetedCategories
+                    unbudgetedCategories = unbudgetedCategories,
+                    isLoading = false
                 )
             }
         }.launchIn(viewModelScope)
@@ -52,6 +56,12 @@ class BudgetViewModel(private val repository: BudgetRepository) : ViewModel() {
     fun onMoveMonth(delta: Int) {
         val newDate = _state.value.currentDate.plusMonths(delta.toLong())
 
-        _state.update { it.copy(currentDate = newDate, isLoading = true) }
+        _state.update { it.copy(currentDate = newDate) }
+    }
+
+    fun deleteBudgetById(id: Int) {
+        viewModelScope.launch {
+            repository.deleteBudgetById(id)
+        }
     }
 }

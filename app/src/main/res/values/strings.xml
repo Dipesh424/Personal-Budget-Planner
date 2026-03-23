@@ -25,4 +25,9 @@
     <string name="add_to_budget">Add to Budget</string>
     <string name="currently_no_budget_set_for_this_month">Currently no budget set for this month</string>
     <string name="active_budgets">Active Budgets</string>
+    <string name="limit">Limit</string>
+    <string name="_0_00">0.00</string>
+    <string name="remove_budget">Remove Budget?</string>
+    <string name="remove">Remove</string>
+    <string name="budget_remove_confirmation">Are you sure you want to remove the budget for %1$s? This will not delete your expenses, but you won\'t see a limit for this category anymore.</string>
 </resources>
