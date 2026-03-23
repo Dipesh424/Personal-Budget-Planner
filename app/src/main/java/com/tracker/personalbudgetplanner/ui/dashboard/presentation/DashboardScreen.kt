@@ -2,23 +2,58 @@ package com.tracker.personalbudgetplanner.ui.dashboard.presentation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.rounded.KeyboardArrowLeft
-import androidx.compose.material.icons.rounded.KeyboardArrowRight
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.rounded.AccountBalanceWallet
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.tracker.personalbudgetplanner.R
 import java.time.Instant
 import java.time.LocalDate
@@ -40,7 +75,8 @@ fun DashboardScreen(
 
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = selectedDate.atStartOfDay().toEpochSecond(ZoneOffset.UTC) * 1000
+            initialSelectedDateMillis = selectedDate.atStartOfDay()
+                .toEpochSecond(ZoneOffset.UTC) * 1000
         )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
@@ -53,12 +89,12 @@ fun DashboardScreen(
                     }
                     showDatePicker = false
                 }) {
-                    Text(stringResource(R.string.ok))
+                    Text("OK")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text(stringResource(R.string.cancel))
+                    Text("Cancel")
                 }
             }
         ) {
@@ -67,152 +103,254 @@ fun DashboardScreen(
     }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
-                    Text("My Payments", style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.ExtraBold))
+                    Text(
+                        stringResource(R.string.app_name),
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.5.sp
+                        )
+                    )
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                    scrolledContainerColor = Color.Unspecified,
-                    navigationIconContentColor = Color.Unspecified,
-                    titleContentColor = Color.Unspecified,
-                    actionIconContentColor = Color.Unspecified
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color.Transparent
                 )
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { /* TODO */ },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = Color.White,
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add")
-            }
         }
     ) { padding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .padding(padding)
-                .fillMaxSize()
+                .fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // Header: Month Selector
-            MonthSelector(
-                currentMonthLabel = selectedDate.format(monthYearFormatter),
-                onPrevious = { selectedDate = selectedDate.minusMonths(1) },
-                onNext = { selectedDate = selectedDate.plusMonths(1) },
-                onDateClick = { showDatePicker = true }
-            )
+            // Month Selector
+            item {
+                MonthSelectorModern(
+                    currentMonthLabel = selectedDate.format(monthYearFormatter),
+                    onPrevious = { selectedDate = selectedDate.minusMonths(1) },
+                    onNext = { selectedDate = selectedDate.plusMonths(1) },
+                    onDateClick = { showDatePicker = true }
+                )
+            }
 
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // Main Balance Card
-                item {
-                    MainBalanceCard(income = "50,000", expense = "25,000")
-                }
+            // Main Balance Card
+            item {
+                ModernBalanceCard(
+                    totalBalance = "Rs. 25,000",
+                    income = "50,000",
+                    expense = "25,000"
+                )
+            }
 
-                // Recent Transactions Header
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Bottom
-                    ) {
-                        Text(
-                            text = "Recent Activity",
-                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                        )
-                        Text(
-                            text = "See All",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.clickable { onSeeAllClick() }
-                        )
-                    }
-                }
-
-                // Transactions
-                items(6) { index ->
-                    TransactionItem(
-                        category = if (index % 2 == 0) "Grocery" else "Salary",
-                        date = "24 Feb 2026",
-                        amount = if (index % 2 == 0) "- Rs. 500" else "+ Rs. 15,000",
-                        isExpense = index % 2 == 0
+            // Quick Stats
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    StatCard(
+                        modifier = Modifier.weight(1f),
+                        label = "Income",
+                        amount = "Rs. 50,000",
+                        icon = Icons.Default.ArrowUpward,
+                        color = Color(0xFF4CAF50)
+                    )
+                    StatCard(
+                        modifier = Modifier.weight(1f),
+                        label = "Expenses",
+                        amount = "Rs. 25,000",
+                        icon = Icons.Default.ArrowDownward,
+                        color = Color(0xFFF44336)
                     )
                 }
+            }
+
+            // Recent Transactions Header
+            item {
+                SectionHeader(
+                    title = "Recent Activity",
+                    onActionClick = onSeeAllClick,
+                    actionLabel = "See All"
+                )
+            }
+
+            // Transactions
+            items(6) { index ->
+                TransactionItem(
+                    category = if (index % 2 == 0) "Grocery" else "Salary",
+                    date = "24 Feb 2026",
+                    amount = if (index % 2 == 0) "- Rs. 500" else "+ Rs. 15,000",
+                    isExpense = index % 2 == 0
+                )
             }
         }
     }
 }
 
 @Composable
-fun MonthSelector(
+fun MonthSelectorModern(
     currentMonthLabel: String,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
     onDateClick: () -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        IconButton(onClick = onPrevious) {
-            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, contentDescription = "Back", modifier = Modifier.size(32.dp))
-        }
-        Text(
-            text = currentMonthLabel,
-            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-            modifier = Modifier.clickable { onDateClick() }
-        )
-        IconButton(onClick = onNext) {
-            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = "Next", modifier = Modifier.size(32.dp))
-        }
-    }
-}
-
-@Composable
-fun MainBalanceCard(income: String, expense: String) {
-    Card(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+        shape = RoundedCornerShape(16.dp)
     ) {
-        Column(modifier = Modifier.padding(24.dp)) {
-            Text("Total Balance", style = MaterialTheme.typography.labelLarge)
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            IconButton(onClick = onPrevious) {
+                Icon(
+                    Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
+                    contentDescription = "Back",
+                    modifier = Modifier.size(28.dp)
+                )
+            }
             Text(
-                "Rs. 25,000",
-                style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Black)
+                text = currentMonthLabel,
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { onDateClick() }
+                    .padding(horizontal = 12.dp, vertical = 4.dp)
             )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                SummaryItem("Income", "Rs. $income", Color(0xFF4CAF50))
-                SummaryItem("Expense", "Rs. $expense", Color(0xFFF44336))
+            IconButton(onClick = onNext) {
+                Icon(
+                    Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                    contentDescription = "Next",
+                    modifier = Modifier.size(28.dp)
+                )
             }
         }
     }
 }
 
 @Composable
-fun SummaryItem(label: String, amount: String, color: Color) {
-    Column {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(modifier = Modifier
-                .size(8.dp)
-                .background(color, RoundedCornerShape(2.dp)))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(label, style = MaterialTheme.typography.labelMedium)
+fun ModernBalanceCard(totalBalance: String, income: String, expense: String) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(160.dp),
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                        )
+                    )
+                )
+                .padding(24.dp)
+        ) {
+            Column(modifier = Modifier.align(Alignment.TopStart)) {
+                Text(
+                    "Total Balance",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+                )
+                Text(
+                    totalBalance,
+                    style = MaterialTheme.typography.displaySmall.copy(
+                        fontWeight = FontWeight.Black,
+                        fontSize = 32.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+            }
+
+            Icon(
+                imageVector = Icons.Rounded.AccountBalanceWallet,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(64.dp)
+                    .align(Alignment.BottomEnd)
+                    .graphicsLayer(alpha = 0.2f),
+                tint = MaterialTheme.colorScheme.onPrimary
+            )
         }
-        Text(amount, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+    }
+}
+
+@Composable
+fun StatCard(
+    modifier: Modifier = Modifier,
+    label: String,
+    amount: String,
+    icon: ImageVector,
+    color: Color
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 2.dp,
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(color.copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(18.dp))
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Text(
+                    label,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    amount,
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SectionHeader(
+    title: String,
+    onActionClick: () -> Unit,
+    actionLabel: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+        )
+        TextButton(onClick = onActionClick) {
+            Text(actionLabel, fontWeight = FontWeight.SemiBold)
+        }
     }
 }
 
@@ -220,34 +358,45 @@ fun SummaryItem(label: String, amount: String, color: Color) {
 fun TransactionItem(category: String, date: String, amount: String, isExpense: Boolean) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        color = Color.White
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 1.dp
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Icon Placeholder
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp)),
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
-                Text(category.take(1))
+                Text(
+                    text = category.take(1),
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                )
             }
 
             Spacer(modifier = Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(category, fontWeight = FontWeight.Bold)
-                Text(date, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                Text(
+                    category,
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+                )
+                Text(
+                    date,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             Text(
                 text = amount,
-                fontWeight = FontWeight.Bold,
-                color = if (isExpense) Color(0xFFF44336) else Color(0xFF4CAF50)
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.ExtraBold),
+                color = if (isExpense) Color(0xFFE53935) else Color(0xFF43A047)
             )
         }
     }

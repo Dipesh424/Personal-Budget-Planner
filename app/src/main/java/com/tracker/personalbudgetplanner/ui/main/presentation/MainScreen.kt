@@ -1,6 +1,8 @@
 package com.tracker.personalbudgetplanner.ui.main.presentation
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,6 +13,7 @@ import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
@@ -35,11 +38,14 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.tracker.personalbudgetplanner.navigation.BottomNavKey
+import com.tracker.personalbudgetplanner.navigation.Routes
 import com.tracker.personalbudgetplanner.ui.budget.presentation.BudgetScreenRoot
 import com.tracker.personalbudgetplanner.ui.budget.presentation.BudgetViewModel
 import com.tracker.personalbudgetplanner.ui.category.presentation.CategoriesScreenRoot
 import com.tracker.personalbudgetplanner.ui.category.presentation.CategoriesViewModel
 import com.tracker.personalbudgetplanner.ui.dashboard.presentation.DashboardScreen
+import com.tracker.personalbudgetplanner.ui.dashboard.presentation.RecentActivityScreen
+import com.tracker.personalbudgetplanner.ui.settings.presentation.SettingsScreen
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -105,10 +111,12 @@ fun MainScreen() {
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             NavigationBar(
                 containerColor = MaterialTheme.colorScheme.surface,
                 tonalElevation = 0.dp,
+                windowInsets = NavigationBarDefaults.windowInsets,
                 modifier = Modifier.graphicsLayer {
                     shadowElevation = 8f
                 }
@@ -135,7 +143,6 @@ fun MainScreen() {
                             Icon(
                                 imageVector = key.icon,
                                 contentDescription = key.label,
-                                // Animate the icon color for a smooth transition
                                 tint = if (isSelected) MaterialTheme.colorScheme.primary
                                 else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                             )
@@ -144,7 +151,6 @@ fun MainScreen() {
                             Text(
                                 text = key.label,
                                 style = MaterialTheme.typography.labelSmall.copy(
-                                    // Use a bolder weight for the selected item
                                     fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Medium,
                                     letterSpacing = if (isSelected) 0.sp else 0.5.sp
                                 )
@@ -178,14 +184,19 @@ fun MainScreen() {
         }
     ) { innerPadding ->
         NavDisplay(
-            modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding()),
-            backStack = currentBackStack, entryDecorators = listOf(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            backStack = currentBackStack,
+            entryDecorators = listOf(
                 rememberSaveableStateHolderNavEntryDecorator(),
                 rememberViewModelStoreNavEntryDecorator()
             ),
             entryProvider = entryProvider {
                 entry<BottomNavKey.Records> {
-                    DashboardScreen { }
+                    DashboardScreen(onSeeAllClick = {
+                        addToBackStack(Routes.RecentActivity)
+                    })
                 }
                 entry<BottomNavKey.Analysis> {
 
@@ -201,8 +212,16 @@ fun MainScreen() {
                 }
 
                 entry<BottomNavKey.Settings> {
+                    SettingsScreen()
                 }
-            })
+
+                entry<Routes.RecentActivity> {
+                    RecentActivityScreen(onBack = {
+                        onHandleBackPressed()
+                    })
+                }
+            }
+        )
     }
 
     BackHandler(enabled = true) {
@@ -224,46 +243,27 @@ private fun onBackPressed(
     onPopCategoriesBackStack: () -> Unit,
     onPopupSettingsBackStack: () -> Unit,
 ) {
-    when (currentBottomKey) {
-        BottomNavKey.Records -> {
-            if (recordsBackStackSize > 1) {
-                onPopRecordsBackStack()
-            } else {
-                onSetHomeKey()
-            }
-        }
+    val currentStackSize = when (currentBottomKey) {
+        BottomNavKey.Records -> recordsBackStackSize
+        BottomNavKey.Analysis -> analysisBackStackSize
+        BottomNavKey.Budget -> budgetBackStackSize
+        BottomNavKey.Categories -> categoriesBackStackSize
+        BottomNavKey.Settings -> settingsBackStackSize
+    }
 
-        BottomNavKey.Analysis -> {
-            if (analysisBackStackSize > 1) {
-                onPopAnalysisBackStack()
-            } else {
-                onSetHomeKey()
-            }
+    if (currentStackSize > 1) {
+        when (currentBottomKey) {
+            BottomNavKey.Records -> onPopRecordsBackStack()
+            BottomNavKey.Analysis -> onPopAnalysisBackStack()
+            BottomNavKey.Budget -> onPopBudgetBackStack()
+            BottomNavKey.Categories -> onPopCategoriesBackStack()
+            BottomNavKey.Settings -> onPopupSettingsBackStack()
         }
-
-        BottomNavKey.Budget -> {
-            if (budgetBackStackSize > 1) {
-                onPopBudgetBackStack()
-            } else {
-                onSetHomeKey()
-            }
-        }
-
-        BottomNavKey.Categories -> {
-            if (categoriesBackStackSize > 1) {
-                onPopCategoriesBackStack()
-            } else {
-                onSetHomeKey()
-            }
-        }
-
-        BottomNavKey.Settings -> {
-            if (settingsBackStackSize > 1) {
-                onPopupSettingsBackStack()
-            } else {
-                onSetHomeKey()
-            }
-        }
+    } else if (currentBottomKey != BottomNavKey.Records) {
+        onSetHomeKey()
+    } else {
+        // Already at home and stack size 1, let system handle exit or whatever
+        // Usually we don't do anything here if we want to allow the app to close
     }
 }
 
