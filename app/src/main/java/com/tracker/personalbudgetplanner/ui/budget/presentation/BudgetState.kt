@@ -10,5 +10,5 @@ data class BudgetState(
     val totalSpent: Double = 0.0,
     val budgetedCategories: List<BudgetCategories> = emptyList(),
     val unbudgetedCategories: List<Categories> = emptyList(),
-    val isLoading: Boolean = false
+    val isLoading: Boolean = true
 )

@@ -13,4 +13,6 @@ interface BudgetRepository {
     fun getBudgetedCategories(month: Int, year: Int): Flow<List<BudgetCategories>>
 
     fun getUnBudgetedCategories(month: Int, year: Int): Flow<List<Categories>>
+
+    suspend fun deleteBudgetById (id : Int)
 }

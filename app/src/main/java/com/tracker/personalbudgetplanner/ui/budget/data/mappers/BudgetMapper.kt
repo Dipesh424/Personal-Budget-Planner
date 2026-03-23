@@ -15,7 +15,7 @@ fun BudgetEntity.toBudget() = Budget(
 )
 
 fun Budget.toBudgetEntity() = BudgetEntity(
-    id = id,
+    id = id ?: 0,
     categoryId = categoryId,
     amount = amount,
     month = month,
@@ -23,6 +23,7 @@ fun Budget.toBudgetEntity() = BudgetEntity(
 )
 
 fun CategoryWithBudget.toBudgetCategories() = BudgetCategories(
+    budgetId = budgetId,
     category = categoryWithIcon.toCategories(),
     budgetAmount = budgetAmount,
 //    spentAmount = spentAmount,

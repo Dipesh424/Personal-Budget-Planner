@@ -41,4 +41,8 @@ class BudgetRepositoryImpl(private val appDao: AppDao) : BudgetRepository {
             categories.map { it.toCategories() }
         }
     }
+
+    override suspend fun deleteBudgetById(id: Int) {
+        appDao.deleteBudgetById(id)
+    }
 }

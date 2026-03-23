@@ -2,19 +2,47 @@ package com.tracker.personalbudgetplanner.ui.dashboard.presentation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.rounded.AccountBalanceWallet
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,12 +70,13 @@ fun DashboardScreen(
     // State for Date Navigation
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     val monthYearFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())
-    
+
     var showDatePicker by remember { mutableStateOf(false) }
 
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = selectedDate.atStartOfDay().toEpochSecond(ZoneOffset.UTC) * 1000
+            initialSelectedDateMillis = selectedDate.atStartOfDay()
+                .toEpochSecond(ZoneOffset.UTC) * 1000
         )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
@@ -79,7 +108,7 @@ fun DashboardScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        stringResource(R.string.app_name), 
+                        stringResource(R.string.app_name),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.5.sp
@@ -90,17 +119,6 @@ fun DashboardScreen(
                     containerColor = Color.Transparent
                 )
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { /* TODO */ },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                shape = CircleShape,
-                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 4.dp)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add")
-            }
         }
     ) { padding ->
         LazyColumn(
@@ -176,8 +194,8 @@ fun DashboardScreen(
 
 @Composable
 fun MonthSelectorModern(
-    currentMonthLabel: String, 
-    onPrevious: () -> Unit, 
+    currentMonthLabel: String,
+    onPrevious: () -> Unit,
     onNext: () -> Unit,
     onDateClick: () -> Unit
 ) {
@@ -192,7 +210,11 @@ fun MonthSelectorModern(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             IconButton(onClick = onPrevious) {
-                Icon(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, contentDescription = "Back", modifier = Modifier.size(28.dp))
+                Icon(
+                    Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
+                    contentDescription = "Back",
+                    modifier = Modifier.size(28.dp)
+                )
             }
             Text(
                 text = currentMonthLabel,
@@ -203,7 +225,11 @@ fun MonthSelectorModern(
                     .padding(horizontal = 12.dp, vertical = 4.dp)
             )
             IconButton(onClick = onNext) {
-                Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = "Next", modifier = Modifier.size(28.dp))
+                Icon(
+                    Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                    contentDescription = "Next",
+                    modifier = Modifier.size(28.dp)
+                )
             }
         }
     }
@@ -246,7 +272,7 @@ fun ModernBalanceCard(totalBalance: String, income: String, expense: String) {
                     color = MaterialTheme.colorScheme.onPrimary
                 )
             }
-            
+
             Icon(
                 imageVector = Icons.Rounded.AccountBalanceWallet,
                 contentDescription = null,
@@ -274,7 +300,7 @@ fun StatCard(
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 2.dp,
         border = androidx.compose.foundation.BorderStroke(
-            1.dp, 
+            1.dp,
             MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
         )
     ) {
@@ -293,8 +319,15 @@ fun StatCard(
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column {
-                Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(amount, style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold))
+                Text(
+                    label,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    amount,
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+                )
             }
         }
     }
@@ -349,8 +382,15 @@ fun TransactionItem(category: String, date: String, amount: String, isExpense: B
             Spacer(modifier = Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(category, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold))
-                Text(date, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    category,
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+                )
+                Text(
+                    date,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             Text(

@@ -12,7 +12,6 @@ import com.tracker.personalbudgetplanner.ui.budget.data.local.CategoryWithBudget
 import com.tracker.personalbudgetplanner.ui.category.data.local.CategoryEntity
 import com.tracker.personalbudgetplanner.ui.category.data.local.CategoryWithIcon
 import com.tracker.personalbudgetplanner.ui.category.data.local.IconEntity
-import com.tracker.personalbudgetplanner.utils.constants.DbConstants
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -56,27 +55,35 @@ interface AppDao {
 //    WHERE b.month = :month AND b.year = :year""")
 
     @Transaction
-    @Query("""
+    @Query(
+        """
     SELECT 
         c.*, 
         b.amount as budgetAmount,
+        b.id as budgetId,
         b.month,
         b.year
     FROM categories c
     INNER JOIN budgets b ON c.id = b.categoryId
     WHERE b.month = :month AND b.year = :year
     ORDER BY c.name ASC
-    """)
+    """
+    )
     fun getBudgetedCategories(month: Int, year: Int): Flow<List<CategoryWithBudget>>
 
     @Transaction
-    @Query("""
+    @Query(
+        """
     SELECT * FROM categories 
     WHERE id NOT IN (
         SELECT categoryId FROM budgets 
         WHERE month = :month AND year = :year
     )
     ORDER BY name ASC
-""")
+"""
+    )
     fun getUnbudgetedCategories(month: Int, year: Int): Flow<List<CategoryWithIcon>>
+
+    @Query("DELETE FROM budgets WHERE id = :id")
+    suspend fun deleteBudgetById(id: Int)
 }
