@@ -30,4 +30,5 @@
     <string name="remove_budget">Remove Budget?</string>
     <string name="remove">Remove</string>
     <string name="budget_remove_confirmation">Are you sure you want to remove the budget for %1$s? This will not delete your expenses, but you won\'t see a limit for this category anymore.</string>
+    <string name="ok">OK</string>
 </resources>

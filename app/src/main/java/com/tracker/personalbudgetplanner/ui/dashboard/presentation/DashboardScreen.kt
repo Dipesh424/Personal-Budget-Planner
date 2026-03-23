@@ -16,8 +16,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.tracker.personalbudgetplanner.R
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -33,7 +35,7 @@ fun DashboardScreen(
     // State for Date Navigation
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     val monthYearFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())
-    
+
     var showDatePicker by remember { mutableStateOf(false) }
 
     if (showDatePicker) {
@@ -51,12 +53,12 @@ fun DashboardScreen(
                     }
                     showDatePicker = false
                 }) {
-                    Text("OK")
+                    Text(stringResource(R.string.ok))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         ) {
@@ -150,8 +152,8 @@ fun DashboardScreen(
 
 @Composable
 fun MonthSelector(
-    currentMonthLabel: String, 
-    onPrevious: () -> Unit, 
+    currentMonthLabel: String,
+    onPrevious: () -> Unit,
     onNext: () -> Unit,
     onDateClick: () -> Unit
 ) {
@@ -204,7 +206,9 @@ fun MainBalanceCard(income: String, expense: String) {
 fun SummaryItem(label: String, amount: String, color: Color) {
     Column {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(modifier = Modifier.size(8.dp).background(color, RoundedCornerShape(2.dp)))
+            Box(modifier = Modifier
+                .size(8.dp)
+                .background(color, RoundedCornerShape(2.dp)))
             Spacer(modifier = Modifier.width(8.dp))
             Text(label, style = MaterialTheme.typography.labelMedium)
         }
