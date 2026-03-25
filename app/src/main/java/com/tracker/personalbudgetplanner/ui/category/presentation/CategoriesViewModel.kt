@@ -51,4 +51,34 @@ class CategoriesViewModel(private val categoriesRepository: CategoriesRepository
             categoriesRepository.deleteCategory(category)
         }
     }
+
+    fun onAction(action: CategoryAction) {
+        when (action) {
+            is CategoryAction.OnAddCategoryClick -> {
+                _state.update { it.copy(isAddingNew = true) }
+            }
+            is CategoryAction.OnEditCategoryClick -> {
+                _state.update { it.copy(categoryToEdit = action.category) }
+            }
+            is CategoryAction.OnDeleteCategoryClick -> {
+                _state.update { it.copy(categoryToDelete = action.category) }
+            }
+            is CategoryAction.OnDismissDialogs -> {
+                _state.update { it.copy(
+                    isAddingNew = false,
+                    categoryToEdit = null,
+                    categoryToDelete = null
+                )}
+            }
+            is CategoryAction.OnDeleteConfirm -> {
+                val category = _state.value.categoryToDelete ?: return
+                deleteCategory(category)
+                onAction(CategoryAction.OnDismissDialogs)
+            }
+            is CategoryAction.OnSaveCategory -> {
+                upsertCategory(action.category)
+                onAction(CategoryAction.OnDismissDialogs)
+            }
+        }
+    }
 }

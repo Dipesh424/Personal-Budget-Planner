@@ -49,7 +49,7 @@ import com.tracker.personalbudgetplanner.ui.settings.presentation.SettingsScreen
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun MainScreen() {
+fun MainScreen(onFabClick: () -> Unit) {
     val recordBackStack = rememberNavBackStack(BottomNavKey.Records)
     val analysisBackStack = rememberNavBackStack(BottomNavKey.Analysis)
     val budgetBackStack = rememberNavBackStack(BottomNavKey.Budget)
@@ -169,7 +169,7 @@ fun MainScreen() {
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = {},
+                onClick = onFabClick,
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 shape = RoundedCornerShape(16.dp),
@@ -270,5 +270,5 @@ private fun onBackPressed(
 @Preview(showBackground = true)
 @Composable
 fun MainScreenPreview() {
-    MainScreen()
+    MainScreen(onFabClick = {})
 }

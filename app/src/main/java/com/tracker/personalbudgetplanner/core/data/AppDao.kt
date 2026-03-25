@@ -12,6 +12,7 @@ import com.tracker.personalbudgetplanner.ui.budget.data.local.CategoryWithBudget
 import com.tracker.personalbudgetplanner.ui.category.data.local.CategoryEntity
 import com.tracker.personalbudgetplanner.ui.category.data.local.CategoryWithIcon
 import com.tracker.personalbudgetplanner.ui.category.data.local.IconEntity
+import com.tracker.personalbudgetplanner.ui.transaction.data.local.ExpenseEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -86,4 +87,7 @@ interface AppDao {
 
     @Query("DELETE FROM budgets WHERE id = :id")
     suspend fun deleteBudgetById(id: Int)
+
+    @Upsert
+    suspend fun upsertExpense(expense: ExpenseEntity)
 }

@@ -9,6 +9,7 @@ object DbConstants {
     const val table_category_icons = "icons"
     const val table_budgets = "budgets"
     const val table_expenses = "expenses"
+    const val table_income = "income"
 
     const val category_expense = "expense"
     const val category_income = "income"

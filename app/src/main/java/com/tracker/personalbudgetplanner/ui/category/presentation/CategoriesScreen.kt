@@ -82,54 +82,39 @@ fun CategoriesScreenRoot(
     viewModel: CategoriesViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    var isAddingNew by remember { mutableStateOf(false) }
-    var showDeleteDialog by remember { mutableStateOf<Categories?>(null) }
-    var categoryToEdit by remember { mutableStateOf<Categories?>(null) }
 
-    showDeleteDialog?.let { category ->
+    state.categoryToDelete?.let { category ->
         AppAlertDialog(
-            onDismissRequest = { showDeleteDialog = null },
-            onConfirm = {
-                viewModel.deleteCategory(category)
-                showDeleteDialog = null
-            },
+            onDismissRequest = { viewModel.onAction(CategoryAction.OnDismissDialogs) },
+            onConfirm = { viewModel.onAction(CategoryAction.OnDeleteConfirm) },
             title = stringResource(R.string.delete_category),
-            description = stringResource(
-                R.string.confirm_category_delete,
-                category.name
-            ),
+            description = stringResource(R.string.confirm_category_delete, category.name),
             confirmText = stringResource(R.string.delete),
             isDestructive = true,
             icon = Icons.Default.DeleteForever
         )
     }
-    if (isAddingNew || categoryToEdit != null) {
-        AddCategorySheetRoot(viewModel, editingCategory = categoryToEdit, onDismiss = {
-            isAddingNew = false
-            categoryToEdit = null
-        }, onSave = { category ->
-            viewModel.upsertCategory(category)
-            isAddingNew = false
-            categoryToEdit = null
-        })
+
+    if (state.isAddingNew || state.categoryToEdit != null) {
+        AddCategorySheetRoot(
+            viewModel = viewModel,
+            editingCategory = state.categoryToEdit,
+            onDismiss = { viewModel.onAction(CategoryAction.OnDismissDialogs) },
+            onSave = { category -> viewModel.onAction(CategoryAction.OnSaveCategory(category)) }
+        )
     }
+
     CategoriesScreen(
         categoryState = state,
-        onAddCategory = {
-            isAddingNew = true
-        },
-        onEditCategory = { categoryToEdit = it },
-        onDeleteCategory = { category ->
-            showDeleteDialog = category
+        onAction = {
+            viewModel.onAction(it)
         })
 }
 
 @Composable
 fun CategoriesScreen(
     categoryState: CategoryState,
-    onAddCategory: () -> Unit,
-    onEditCategory: (Categories) -> Unit,
-    onDeleteCategory: (Categories) -> Unit
+    onAction: (CategoryAction) -> Unit
 ) {
     val scrollState = rememberLazyListState()
 
@@ -197,14 +182,14 @@ fun CategoriesScreen(
                     items(categoryState.categories) { item ->
                         CategoryManagementRow(
                             category = item,
-                            onEdit = { onEditCategory(item) },
-                            onDelete = { onDeleteCategory(item) }
+                            onEdit = { onAction(CategoryAction.OnEditCategoryClick(item)) },
+                            onDelete = { onAction(CategoryAction.OnDeleteCategoryClick(item)) }
                         )
                     }
 
                     item {
                         OutlinedButton(
-                            onClick = { onAddCategory() },
+                            onClick = { onAction(CategoryAction.OnAddCategoryClick) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(64.dp)
@@ -351,8 +336,6 @@ fun WelcomeScreenPreview() {
     PersonalBudgetPlannerTheme {
         CategoriesScreen(
             categoryState = CategoryState(),
-            onAddCategory = {},
-            onEditCategory = {},
-            onDeleteCategory = {})
+            onAction = {})
     }
 }

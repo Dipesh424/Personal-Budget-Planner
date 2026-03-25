@@ -1,4 +1,4 @@
-package com.tracker.personalbudgetplanner.ui.budget.data.local
+package com.tracker.personalbudgetplanner.ui.transaction.data.local
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
@@ -14,7 +14,7 @@ import com.tracker.personalbudgetplanner.utils.constants.DbConstants
             entity = CategoryEntity::class,
             parentColumns = ["id"],
             childColumns = ["categoryId"],
-            onDelete = ForeignKey.CASCADE // If category is deleted, delete its spending too
+            onDelete = ForeignKey.Companion.CASCADE // If category is deleted, delete its spending too
         )
     ],
     indices = [Index("categoryId")]

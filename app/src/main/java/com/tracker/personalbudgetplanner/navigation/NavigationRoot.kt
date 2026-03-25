@@ -12,6 +12,8 @@ import com.tracker.personalbudgetplanner.ui.category.presentation.CategoriesScre
 import com.tracker.personalbudgetplanner.ui.category.presentation.CategoriesViewModel
 import com.tracker.personalbudgetplanner.ui.income.presentation.IncomeSetupScreen
 import com.tracker.personalbudgetplanner.ui.main.presentation.MainScreen
+import com.tracker.personalbudgetplanner.ui.transaction.presentation.AddTransactionScreenRoot
+import com.tracker.personalbudgetplanner.ui.transaction.presentation.AddTransactionViewModel
 import com.tracker.personalbudgetplanner.ui.welcome.presentation.WelcomeScreen
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -44,9 +46,14 @@ fun NavigationRoot() {
                 val viewModel = koinViewModel<CategoriesViewModel>()
                 CategoriesScreenRoot(viewModel)
             }
-
             entry<Routes.Main> {
-                MainScreen()
+                MainScreen(onFabClick = {
+                    backStack.add(Routes.Transaction)
+                })
+            }
+            entry<Routes.Transaction> {
+                val viewModel = koinViewModel<AddTransactionViewModel>()
+                AddTransactionScreenRoot(viewModel)
             }
         }
     )
