@@ -88,7 +88,7 @@ fun AddTransactionScreen(
     state: TransactionState,
     onAction: (TransactionAction) -> Unit
 ) {
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     Scaffold(
         topBar = {
@@ -308,7 +308,7 @@ fun CategorySelectionList(
             .padding(bottom = 32.dp, start = 20.dp, end = 20.dp)
     ) {
         Text(
-            text = "Select Category",
+            text = stringResource(R.string.select_category),
             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
             modifier = Modifier.padding(vertical = 16.dp)
         )
@@ -399,7 +399,7 @@ fun TransactionTypeToggle(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Expense",
+                    text = stringResource(R.string.expense),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
                     color = if (isExpense) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
@@ -418,7 +418,7 @@ fun TransactionTypeToggle(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Income",
+                    text = stringResource(R.string.income),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
                     color = if (!isExpense) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
