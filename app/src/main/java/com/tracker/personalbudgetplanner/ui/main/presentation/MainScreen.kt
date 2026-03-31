@@ -1,26 +1,40 @@
 package com.tracker.personalbudgetplanner.ui.main.presentation
 
+import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.UploadFile
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -39,37 +53,59 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.tracker.personalbudgetplanner.navigation.BottomNavKey
 import com.tracker.personalbudgetplanner.navigation.Routes
+import com.tracker.personalbudgetplanner.ui.analysis.presentation.AnalysisScreen
 import com.tracker.personalbudgetplanner.ui.budget.presentation.BudgetScreenRoot
 import com.tracker.personalbudgetplanner.ui.budget.presentation.BudgetViewModel
 import com.tracker.personalbudgetplanner.ui.category.presentation.CategoriesScreenRoot
 import com.tracker.personalbudgetplanner.ui.category.presentation.CategoriesViewModel
+import com.tracker.personalbudgetplanner.ui.dashboard.presentation.AddOptionItem
 import com.tracker.personalbudgetplanner.ui.dashboard.presentation.DashboardScreen
 import com.tracker.personalbudgetplanner.ui.dashboard.presentation.RecentActivityScreen
+import com.tracker.personalbudgetplanner.ui.settings.presentation.ImportStatementDialog
 import com.tracker.personalbudgetplanner.ui.settings.presentation.SettingsScreen
+import com.tracker.personalbudgetplanner.ui.settings.presentation.SuccessImportDialog
+import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen() {
-    val recordBackStack = rememberNavBackStack(BottomNavKey.Records)
+    val homeBackStack = rememberNavBackStack(BottomNavKey.Home)
     val analysisBackStack = rememberNavBackStack(BottomNavKey.Analysis)
     val budgetBackStack = rememberNavBackStack(BottomNavKey.Budget)
     val categoriesBackStack = rememberNavBackStack(BottomNavKey.Categories)
     val settingsBackStack = rememberNavBackStack(BottomNavKey.Settings)
 
     var currentKey by rememberSaveable(stateSaver = BottomNavKey.stateSaver) {
-        mutableStateOf(BottomNavKey.Records)
+        mutableStateOf(BottomNavKey.Home)
     }
     val currentBackStack = when (currentKey) {
-        BottomNavKey.Records -> recordBackStack
+        BottomNavKey.Home -> homeBackStack
         BottomNavKey.Analysis -> analysisBackStack
         BottomNavKey.Budget -> budgetBackStack
         BottomNavKey.Categories -> categoriesBackStack
         BottomNavKey.Settings -> settingsBackStack
     }
 
+    // State for FAB Options
+    var showAddOptionsSheet by remember { mutableStateOf(false) }
+    var showImportDialog by remember { mutableStateOf(false) }
+    var showSuccessDialog by remember { mutableStateOf(false) }
+    var selectedFileUri by remember { mutableStateOf<Uri?>(null) }
+    
+    val scope = rememberCoroutineScope()
+    val sheetState = rememberModalBottomSheetState()
+
+    // File picker launcher
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        selectedFileUri = uri
+    }
+
     val addToBackStack: (NavKey) -> Unit = {
         when (currentKey) {
-            BottomNavKey.Records -> recordBackStack.add(it)
+            BottomNavKey.Home -> homeBackStack.add(it)
             BottomNavKey.Analysis -> analysisBackStack.add(it)
             BottomNavKey.Budget -> budgetBackStack.add(it)
             BottomNavKey.Categories -> categoriesBackStack.add(it)
@@ -84,16 +120,16 @@ fun MainScreen() {
     val onHandleBackPressed: () -> Unit = {
         onBackPressed(
             currentBottomKey = currentKey,
-            recordsBackStackSize = recordBackStack.size,
+            homeBackStackSize = homeBackStack.size,
             analysisBackStackSize = analysisBackStack.size,
             budgetBackStackSize = budgetBackStack.size,
             categoriesBackStackSize = categoriesBackStack.size,
             settingsBackStackSize = settingsBackStack.size,
             onSetHomeKey = {
-                currentKey = BottomNavKey.Records
+                currentKey = BottomNavKey.Home
             },
-            onPopRecordsBackStack = {
-                recordBackStack.removeLastOrNull()
+            onPopHomeBackStack = {
+                homeBackStack.removeLastOrNull()
             },
             onPopAnalysisBackStack = {
                 analysisBackStack.removeLastOrNull()
@@ -131,7 +167,7 @@ fun MainScreen() {
                                 currentKey = key
                             } else {
                                 when (key) {
-                                    BottomNavKey.Records -> resetBackStack(recordBackStack)
+                                    BottomNavKey.Home -> resetBackStack(homeBackStack)
                                     BottomNavKey.Analysis -> resetBackStack(analysisBackStack)
                                     BottomNavKey.Budget -> resetBackStack(budgetBackStack)
                                     BottomNavKey.Categories -> resetBackStack(categoriesBackStack)
@@ -169,7 +205,7 @@ fun MainScreen() {
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = {},
+                onClick = { showAddOptionsSheet = true },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 shape = RoundedCornerShape(16.dp),
@@ -193,13 +229,13 @@ fun MainScreen() {
                 rememberViewModelStoreNavEntryDecorator()
             ),
             entryProvider = entryProvider {
-                entry<BottomNavKey.Records> {
+                entry<BottomNavKey.Home> {
                     DashboardScreen(onSeeAllClick = {
                         addToBackStack(Routes.RecentActivity)
                     })
                 }
                 entry<BottomNavKey.Analysis> {
-
+                    AnalysisScreen()
                 }
                 entry<BottomNavKey.Budget> {
                     val viewModel = koinViewModel<BudgetViewModel>()
@@ -222,6 +258,79 @@ fun MainScreen() {
                 }
             }
         )
+
+        if (showAddOptionsSheet) {
+            ModalBottomSheet(
+                onDismissRequest = { showAddOptionsSheet = false },
+                sheetState = sheetState,
+                containerColor = MaterialTheme.colorScheme.surface,
+                tonalElevation = 8.dp,
+                dragHandle = { BottomSheetDefaults.DragHandle() }
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 32.dp, top = 8.dp, start = 16.dp, end = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Add Transaction",
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                        modifier = Modifier.padding(bottom = 8.dp, start = 8.dp)
+                    )
+
+                    AddOptionItem(
+                        icon = Icons.Default.Edit,
+                        title = "Add manually",
+                        subtitle = "Enter transaction details manually",
+                        onClick = {
+                            showAddOptionsSheet = false
+                            // TODO: Navigate to manual add screen
+                        }
+                    )
+
+                    AddOptionItem(
+                        icon = Icons.Default.UploadFile,
+                        title = "Upload your Statement",
+                        subtitle = "Import from Excel file",
+                        onClick = {
+                            scope.launch { sheetState.hide() }.invokeOnCompletion {
+                                if (!sheetState.isVisible) {
+                                    showAddOptionsSheet = false
+                                    showImportDialog = true
+                                }
+                            }
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    if (showImportDialog) {
+        ImportStatementDialog(
+            selectedFileUri = selectedFileUri,
+            onDismiss = {
+                showImportDialog = false
+                selectedFileUri = null
+            },
+            onPickFile = {
+                filePickerLauncher.launch("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            },
+            onUpload = {
+                if (selectedFileUri != null) {
+                    showImportDialog = false
+                    showSuccessDialog = true
+                    selectedFileUri = null
+                }
+            }
+        )
+    }
+
+    if (showSuccessDialog) {
+        SuccessImportDialog(
+            onDismiss = { showSuccessDialog = false }
+        )
     }
 
     BackHandler(enabled = true) {
@@ -231,20 +340,20 @@ fun MainScreen() {
 
 private fun onBackPressed(
     currentBottomKey: BottomNavKey,
-    recordsBackStackSize: Int,
+    homeBackStackSize: Int,
     analysisBackStackSize: Int,
     budgetBackStackSize: Int,
     categoriesBackStackSize: Int,
     settingsBackStackSize: Int,
     onSetHomeKey: () -> Unit,
-    onPopRecordsBackStack: () -> Unit,
+    onPopHomeBackStack: () -> Unit,
     onPopAnalysisBackStack: () -> Unit,
     onPopBudgetBackStack: () -> Unit,
     onPopCategoriesBackStack: () -> Unit,
     onPopupSettingsBackStack: () -> Unit,
 ) {
     val currentStackSize = when (currentBottomKey) {
-        BottomNavKey.Records -> recordsBackStackSize
+        BottomNavKey.Home -> homeBackStackSize
         BottomNavKey.Analysis -> analysisBackStackSize
         BottomNavKey.Budget -> budgetBackStackSize
         BottomNavKey.Categories -> categoriesBackStackSize
@@ -253,17 +362,16 @@ private fun onBackPressed(
 
     if (currentStackSize > 1) {
         when (currentBottomKey) {
-            BottomNavKey.Records -> onPopRecordsBackStack()
+            BottomNavKey.Home -> onPopHomeBackStack()
             BottomNavKey.Analysis -> onPopAnalysisBackStack()
             BottomNavKey.Budget -> onPopBudgetBackStack()
             BottomNavKey.Categories -> onPopCategoriesBackStack()
             BottomNavKey.Settings -> onPopupSettingsBackStack()
         }
-    } else if (currentBottomKey != BottomNavKey.Records) {
+    } else if (currentBottomKey != BottomNavKey.Home) {
         onSetHomeKey()
     } else {
-        // Already at home and stack size 1, let system handle exit or whatever
-        // Usually we don't do anything here if we want to allow the app to close
+        // Already at home and stack size 1
     }
 }
 
