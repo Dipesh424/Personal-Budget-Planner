@@ -1,5 +1,10 @@
 package com.tracker.personalbudgetplanner.ui.budget.presentation
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -119,8 +124,6 @@ fun BudgetScreen(
     onEditBudget: (BudgetCategories) -> Unit,
     onDeleteClick: (BudgetCategories) -> Unit
 ) {
-    val totalBudget = state.budgetedCategories.sumOf { it.budgetAmount }
-    val totalSpent = state.budgetedCategories.sumOf { it.spentAmount }
     val monthName = state.currentDate.month.getDisplayName(TextStyle.FULL, Locale.getDefault())
 
     Scaffold(
@@ -182,7 +185,7 @@ fun BudgetScreen(
 
             // Summary Card
             item {
-                PremiumBudgetSummaryCard(totalBudget = totalBudget, totalSpent = totalSpent)
+                PremiumBudgetSummaryCard(totalBudget = state.totalBudget, totalSpent = state.totalSpent)
             }
 
             // Budgeted List
@@ -231,6 +234,7 @@ fun BudgetScreen(
 @Composable
 fun PremiumBudgetSummaryCard(totalBudget: Double, totalSpent: Double) {
     val progress = if (totalBudget > 0) (totalSpent / totalBudget).toFloat() else 0f
+    val isOverBudget = totalBudget > 0 && totalSpent > totalBudget
     val primary = MaterialTheme.colorScheme.primary
     val secondary = MaterialTheme.colorScheme.secondary
 
@@ -238,7 +242,7 @@ fun PremiumBudgetSummaryCard(totalBudget: Double, totalSpent: Double) {
         modifier = Modifier
             .padding(20.dp)
             .fillMaxWidth()
-            .height(180.dp)
+            .heightIn(min = 180.dp)
             .shadow(16.dp, RoundedCornerShape(32.dp)),
         shape = RoundedCornerShape(32.dp),
         color = Color.Transparent
@@ -246,7 +250,7 @@ fun PremiumBudgetSummaryCard(totalBudget: Double, totalSpent: Double) {
         Box(
             modifier = Modifier.background(
                 brush = Brush.linearGradient(
-                    colors = listOf(primary, secondary),
+                    colors = if (isOverBudget) listOf(Color(0xFFFF5252), Color(0xFFFF1744)) else listOf(primary, secondary),
                     start = Offset(0f, 0f),
                     end = Offset(1000f, 1000f)
                 )
@@ -297,7 +301,31 @@ fun PremiumBudgetSummaryCard(totalBudget: Double, totalSpent: Double) {
                     }
                 }
 
-                Spacer(modifier = Modifier.weight(1f))
+                AnimatedVisibility(
+                    visible = isOverBudget,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(top = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            "Total budget has been exceeded!",
+                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                            color = Color.White
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Column {
                     Row(
@@ -323,7 +351,7 @@ fun PremiumBudgetSummaryCard(totalBudget: Double, totalSpent: Double) {
                             .fillMaxWidth()
                             .height(10.dp)
                             .clip(CircleShape),
-                        color = if (progress > 1f) Color(0xFFFF5252) else Color.White,
+                        color = if (isOverBudget) Color.Yellow else Color.White,
                         trackColor = Color.White.copy(alpha = 0.2f),
                         strokeCap = StrokeCap.Round
                     )
@@ -349,7 +377,11 @@ fun PremiumBudgetRow(
             .padding(horizontal = 20.dp, vertical = 6.dp),
         shape = RoundedCornerShape(24.dp),
         color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)),
+        border = BorderStroke(
+            1.dp, 
+            if (isOverspent) MaterialTheme.colorScheme.error.copy(alpha = 0.5f) 
+            else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+        ),
         tonalElevation = 1.dp
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -358,13 +390,16 @@ fun PremiumBudgetRow(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(RoundedCornerShape(14.dp))
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                        .background(
+                            if (isOverspent) MaterialTheme.colorScheme.error.copy(alpha = 0.1f)
+                            else MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = getIconVector(item.category.iconName),
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
+                        tint = if (isOverspent) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -399,6 +434,30 @@ fun PremiumBudgetRow(
                             leadingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp)) }
                         )
                     }
+                }
+            }
+
+            AnimatedVisibility(
+                visible = isOverspent,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                Row(
+                    modifier = Modifier.padding(top = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Warning,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        "You have exceeded the limit for this category!",
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.error
+                    )
                 }
             }
 
@@ -494,7 +553,7 @@ fun SetBudgetBottomSheet(
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
-    var amountText by remember { mutableStateOf(budgetCategories?.budgetAmount?.toString() ?: "") }
+    var amountText by remember { mutableStateOf(budgetCategories?.budgetAmount?.let { if (it > 0) it.toString() else "" } ?: "") }
     val monthName = currentDate.month.getDisplayName(TextStyle.FULL, Locale.getDefault())
     
     ModalBottomSheet(

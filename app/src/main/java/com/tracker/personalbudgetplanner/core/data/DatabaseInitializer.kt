@@ -31,6 +31,8 @@ class DatabaseInitializer(private val provideDao: () -> AppDao) : RoomDatabase.C
                 IconEntity(id = 14, iconName = IconConstants.insurance),
                 IconEntity(id = 15, iconName = IconConstants.gifts),
                 IconEntity(id = 16, iconName = IconConstants.misc),
+                IconEntity(id = 17, iconName = IconConstants.salary),
+                IconEntity(id = 18, iconName = IconConstants.freelance),
             )
             provideDao().insertIcons(iconList)
 
@@ -54,9 +56,8 @@ class DatabaseInitializer(private val provideDao: () -> AppDao) : RoomDatabase.C
                 CategoryEntity(name = "Miscellaneous", iconId = 16, type = DbConstants.category_expense),
 
                 // Income Categories
-                CategoryEntity(name = "Salary", iconId = 16, type = DbConstants.category_income),
-                CategoryEntity(name = "Freelance", iconId = 16, type = DbConstants.category_income),
-                CategoryEntity(name = "Business", iconId = 12, type = DbConstants.category_income),
+                CategoryEntity(name = "Salary", iconId = 17, type = DbConstants.category_income),
+                CategoryEntity(name = "Freelance", iconId = 18, type = DbConstants.category_income),
                 CategoryEntity(name = "Investments", iconId = 12, type = DbConstants.category_income),
                 CategoryEntity(name = "Gifts", iconId = 15, type = DbConstants.category_income),
                 CategoryEntity(name = "Other Income", iconId = 16, type = DbConstants.category_income)

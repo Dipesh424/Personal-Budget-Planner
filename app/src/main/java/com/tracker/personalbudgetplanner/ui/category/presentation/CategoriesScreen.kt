@@ -215,7 +215,9 @@ fun CategoriesScreen(
                     CircularProgressIndicator()
                 }
             } else {
-                val filteredCategories = categoryState.categories.filter { it.type == tabs[selectedTabIndex] }
+                val filteredCategories = categoryState.categories
+                    .filter { it.type == tabs[selectedTabIndex] }
+                    .sortedByDescending { it.name == "Salary" }
 
                 AnimatedContent(
                     targetState = filteredCategories,
@@ -373,6 +375,8 @@ fun getIconVector(iconName: String?): ImageVector {
         IconConstants.insurance -> Icons.Default.Shield
         IconConstants.gifts -> Icons.Default.Favorite
         IconConstants.misc -> Icons.Default.MoreHoriz
+        IconConstants.salary -> Icons.Default.Payments
+        IconConstants.freelance -> Icons.Default.Work
         else -> Icons.Default.MoreHoriz
     }
 }

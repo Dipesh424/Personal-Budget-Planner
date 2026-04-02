@@ -43,10 +43,14 @@ class BudgetViewModel(private val repository: BudgetRepository) : ViewModel() {
             repository.getBudgetedCategories(month, year),
             repository.getUnBudgetedCategories(month, year)
         ) { budgetedCategories, unbudgetedCategories ->
+            val totalBudget = budgetedCategories.sumOf { it.budgetAmount }
+            val totalSpent = budgetedCategories.sumOf { it.spentAmount }
             _state.update {
                 it.copy(
                     budgetedCategories = budgetedCategories,
                     unbudgetedCategories = unbudgetedCategories,
+                    totalBudget = totalBudget,
+                    totalSpent = totalSpent,
                     isLoading = false
                 )
             }

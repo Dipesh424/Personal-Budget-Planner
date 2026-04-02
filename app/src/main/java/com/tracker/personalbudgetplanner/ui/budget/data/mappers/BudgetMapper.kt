@@ -26,7 +26,7 @@ fun CategoryWithBudget.toBudgetCategories() = BudgetCategories(
     budgetId = budgetId,
     category = categoryWithIcon.toCategories(),
     budgetAmount = budgetAmount,
-//    spentAmount = spentAmount,
+    spentAmount = spentAmount,
     month = month,
     year = year
 )

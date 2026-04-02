@@ -17,4 +17,6 @@ object IconConstants {
     const val insurance = "insurance"
     const val gifts = "gifts"
     const val misc = "misc"
+    const val salary = "salary"
+    const val freelance = "freelance"
 }
