@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -42,6 +43,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,9 +57,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tracker.personalbudgetplanner.R
+import org.koin.compose.viewmodel.koinViewModel
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -68,17 +72,17 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
-    onSeeAllClick: () -> Unit = {}
+    onSeeAllClick: () -> Unit = {},
+    viewModel: DashboardViewModel = koinViewModel()
 ) {
-    // State for Date Navigation
-    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    val state by viewModel.state.collectAsState()
     val monthYearFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())
 
     var showDatePicker by remember { mutableStateOf(false) }
 
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = selectedDate.atStartOfDay()
+            initialSelectedDateMillis = state.selectedDate.atStartOfDay()
                 .toEpochSecond(ZoneOffset.UTC) * 1000
         )
         DatePickerDialog(
@@ -86,9 +90,10 @@ fun DashboardScreen(
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let {
-                        selectedDate = Instant.ofEpochMilli(it)
+                        val newDate = Instant.ofEpochMilli(it)
                             .atZone(ZoneId.systemDefault())
                             .toLocalDate()
+                        viewModel.onDateChange(newDate)
                     }
                     showDatePicker = false
                 }) {
@@ -134,9 +139,9 @@ fun DashboardScreen(
             // Month Selector
             item {
                 MonthSelectorModern(
-                    currentMonthLabel = selectedDate.format(monthYearFormatter),
-                    onPrevious = { selectedDate = selectedDate.minusMonths(1) },
-                    onNext = { selectedDate = selectedDate.plusMonths(1) },
+                    currentMonthLabel = state.selectedDate.format(monthYearFormatter),
+                    onPrevious = { viewModel.onDateChange(state.selectedDate.minusMonths(1)) },
+                    onNext = { viewModel.onDateChange(state.selectedDate.plusMonths(1)) },
                     onDateClick = { showDatePicker = true }
                 )
             }
@@ -144,9 +149,9 @@ fun DashboardScreen(
             // Main Balance Card
             item {
                 ModernBalanceCard(
-                    totalBalance = "Rs. 25,000",
-                    income = "50,000",
-                    expense = "25,000"
+                    totalBalance = "Rs. ${state.totalBalance}",
+                    income = "${state.totalIncome}",
+                    expense = "${state.totalExpense}"
                 )
             }
 
@@ -160,13 +165,22 @@ fun DashboardScreen(
             }
 
             // Transactions
-            items(6) { index ->
-                TransactionItem(
-                    category = if (index % 2 == 0) "Grocery" else "Salary",
-                    date = "24 Feb 2026",
-                    amount = if (index % 2 == 0) "- Rs. 500" else "+ Rs. 15,000",
-                    isExpense = index % 2 == 0
-                )
+            if (state.recentTransactions.isEmpty()) {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
+                        Text("No transactions for this month", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            } else {
+                items(state.recentTransactions) { transaction ->
+                    TransactionItem(
+                        category = transaction.categoryName,
+                        date = transaction.date,
+                        amount = if (transaction.isExpense) "- Rs. ${transaction.amount}" else "+ Rs. ${transaction.amount}",
+                        isExpense = transaction.isExpense,
+                        note = transaction.note
+                    )
+                }
             }
         }
     }
@@ -438,7 +452,13 @@ fun SectionHeader(
 }
 
 @Composable
-fun TransactionItem(category: String, date: String, amount: String, isExpense: Boolean) {
+fun TransactionItem(
+    category: String, 
+    date: String, 
+    amount: String, 
+    isExpense: Boolean,
+    note: String = ""
+) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -467,12 +487,23 @@ fun TransactionItem(category: String, date: String, amount: String, isExpense: B
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     category,
-                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
+                if (note.isNotBlank()) {
+                    Text(
+                        note,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
                 Text(
                     date,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                 )
             }
 

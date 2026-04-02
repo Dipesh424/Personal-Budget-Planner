@@ -18,4 +18,7 @@ sealed interface Routes : NavKey {
 
     @Serializable
     data object RecentActivity : Routes
+
+    @Serializable
+    data object AddTransaction : Routes
 }

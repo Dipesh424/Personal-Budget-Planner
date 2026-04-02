@@ -16,13 +16,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecentActivityScreen(
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    viewModel: RecentActivityViewModel = koinViewModel()
 ) {
-    var searchQuery by remember { mutableStateOf("") }
+    val state by viewModel.state.collectAsState()
     
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -67,8 +69,8 @@ fun RecentActivityScreen(
                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
             ) {
                 TextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
+                    value = state.searchQuery,
+                    onValueChange = { viewModel.onSearchQueryChange(it) },
                     placeholder = { Text("Search transactions...", style = MaterialTheme.typography.bodyMedium) },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(20.dp)) },
                     modifier = Modifier.fillMaxWidth(),
@@ -88,43 +90,16 @@ fun RecentActivityScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(16.dp)
             ) {
-                // Mock data
-                val transactions = List(20) { index ->
-                    TransactionData(
-                        category = when (index % 4) {
-                            0 -> "Grocery"
-                            1 -> "Entertainment"
-                            2 -> "Salary"
-                            else -> "Utilities"
-                        },
-                        date = "${24 - (index / 2)} Feb 2026",
-                        amount = if (index % 4 == 2) "+ Rs. ${5000 + (index * 100)}" else "- Rs. ${100 * (index + 1)}",
-                        isExpense = index % 4 != 2
-                    )
-                }
-                
-                items(transactions.filter { it.category.contains(searchQuery, ignoreCase = true) }) { item ->
+                items(state.transactions) { item ->
                     TransactionItem(
-                        category = item.category,
+                        category = item.categoryName,
                         date = item.date,
-                        amount = item.amount,
-                        isExpense = item.isExpense
+                        amount = if (item.isExpense) "- Rs. ${item.amount}" else "+ Rs. ${item.amount}",
+                        isExpense = item.isExpense,
+                        note = item.note
                     )
                 }
             }
         }
     }
 }
-
-@Preview(showBackground = true)
-@Composable
-fun RecentActivityScreenPreview() {
-    RecentActivityScreen(onBack = {})
-}
-
-data class TransactionData(
-    val category: String,
-    val date: String,
-    val amount: String,
-    val isExpense: Boolean
-)

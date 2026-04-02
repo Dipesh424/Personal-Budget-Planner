@@ -35,62 +35,31 @@ class DatabaseInitializer(private val provideDao: () -> AppDao) : RoomDatabase.C
             provideDao().insertIcons(iconList)
 
             val initialCategories = listOf(
+                // Expense Categories
                 CategoryEntity(name = "Groceries", iconId = 1, type = DbConstants.category_expense),
-                CategoryEntity(
-                    name = "Rent & Housing",
-                    iconId = 2,
-                    type = DbConstants.category_expense
-                ),
+                CategoryEntity(name = "Rent & Housing", iconId = 2, type = DbConstants.category_expense),
                 CategoryEntity(name = "Utilities", iconId = 3, type = DbConstants.category_expense),
                 CategoryEntity(name = "Transport", iconId = 4, type = DbConstants.category_expense),
-
                 CategoryEntity(name = "Baby Care", iconId = 5, type = DbConstants.category_expense),
                 CategoryEntity(name = "Clothing", iconId = 6, type = DbConstants.category_expense),
                 CategoryEntity(name = "Health", iconId = 7, type = DbConstants.category_expense),
-                CategoryEntity(
-                    name = "Personal Care",
-                    iconId = 8,
-                    type = DbConstants.category_expense
-                ),
-
-                CategoryEntity(
-                    name = "Dining Out",
-                    iconId = 9,
-                    type = DbConstants.category_expense
-                ),
+                CategoryEntity(name = "Personal Care", iconId = 8, type = DbConstants.category_expense),
+                CategoryEntity(name = "Dining Out", iconId = 9, type = DbConstants.category_expense),
                 CategoryEntity(name = "Shopping", iconId = 10, type = DbConstants.category_expense),
-                CategoryEntity(
-                    name = "Entertainment",
-                    iconId = 11,
-                    type = DbConstants.category_expense
-                ),
+                CategoryEntity(name = "Entertainment", iconId = 11, type = DbConstants.category_expense),
+                CategoryEntity(name = "Investments", iconId = 12, type = DbConstants.category_expense),
+                CategoryEntity(name = "Education", iconId = 13, type = DbConstants.category_expense),
+                CategoryEntity(name = "Insurance", iconId = 14, type = DbConstants.category_expense),
+                CategoryEntity(name = "Gifts & Charity", iconId = 15, type = DbConstants.category_expense),
+                CategoryEntity(name = "Miscellaneous", iconId = 16, type = DbConstants.category_expense),
 
-                CategoryEntity(
-                    name = "Investments",
-                    iconId = 12,
-                    type = DbConstants.category_expense
-                ),
-                CategoryEntity(
-                    name = "Education",
-                    iconId = 13,
-                    type = DbConstants.category_expense
-                ),
-                CategoryEntity(
-                    name = "Insurance",
-                    iconId = 14,
-                    type = DbConstants.category_expense
-                ),
-
-                CategoryEntity(
-                    name = "Gifts & Charity",
-                    iconId = 15,
-                    type = DbConstants.category_expense
-                ),
-                CategoryEntity(
-                    name = "Miscellaneous",
-                    iconId = 16,
-                    type = DbConstants.category_expense
-                )
+                // Income Categories
+                CategoryEntity(name = "Salary", iconId = 16, type = DbConstants.category_income),
+                CategoryEntity(name = "Freelance", iconId = 16, type = DbConstants.category_income),
+                CategoryEntity(name = "Business", iconId = 12, type = DbConstants.category_income),
+                CategoryEntity(name = "Investments", iconId = 12, type = DbConstants.category_income),
+                CategoryEntity(name = "Gifts", iconId = 15, type = DbConstants.category_income),
+                CategoryEntity(name = "Other Income", iconId = 16, type = DbConstants.category_income)
             )
             provideDao().insertCategories(initialCategories)
         }

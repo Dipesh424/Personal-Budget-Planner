@@ -1,10 +1,13 @@
 package com.tracker.personalbudgetplanner.ui.analysis.presentation
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -12,13 +15,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.rounded.AccountBalanceWallet
-import androidx.compose.material.icons.rounded.AutoAwesome
-import androidx.compose.material.icons.rounded.Insights
 import androidx.compose.material.icons.rounded.WarningAmber
 import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,15 +32,74 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tracker.personalbudgetplanner.ui.dashboard.presentation.MonthSelectorModern
+import org.koin.compose.viewmodel.koinViewModel
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+
+@Composable
+fun AnalysisScreenRoot(
+    viewModel: AnalysisViewModel = koinViewModel()
+) {
+    val state by viewModel.state.collectAsState()
+    AnalysisScreen(
+        state = state,
+        onFilterChange = viewModel::onFilterChange,
+        onDateChange = viewModel::onDateChange
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AnalysisScreen() {
-    var selectedTab by remember { mutableIntStateOf(2) }
+fun AnalysisScreen(
+    state: AnalysisState,
+    onFilterChange: (String) -> Unit,
+    onDateChange: (LocalDate) -> Unit
+) {
     val tabs = listOf("Day", "Week", "Month", "Year")
+    val selectedTabIndex = tabs.indexOf(state.selectedFilter).coerceAtLeast(0)
+    val monthYearFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())
+    val yearFormatter = DateTimeFormatter.ofPattern("yyyy", Locale.getDefault())
+    val dayFormatter = DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.getDefault())
+
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = state.selectedDate.atStartOfDay()
+                .toEpochSecond(ZoneOffset.UTC) * 1000
+        )
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let {
+                        val newDate = Instant.ofEpochMilli(it)
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate()
+                        onDateChange(newDate)
+                    }
+                    showDatePicker = false
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Cancel")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -67,30 +127,62 @@ fun AnalysisScreen() {
             contentPadding = PaddingValues(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
+            // Date Selector
+            item {
+                val label = when(state.selectedFilter) {
+                    "Year" -> state.selectedDate.format(yearFormatter)
+                    "Day" -> state.selectedDate.format(dayFormatter)
+                    else -> state.selectedDate.format(monthYearFormatter)
+                }
+                
+                Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    MonthSelectorModern(
+                        currentMonthLabel = label,
+                        onPrevious = { 
+                            val newDate = when(state.selectedFilter) {
+                                "Year" -> state.selectedDate.minusYears(1)
+                                "Day" -> state.selectedDate.minusDays(1)
+                                "Week" -> state.selectedDate.minusWeeks(1)
+                                else -> state.selectedDate.minusMonths(1)
+                            }
+                            onDateChange(newDate)
+                        },
+                        onNext = { 
+                            val newDate = when(state.selectedFilter) {
+                                "Year" -> state.selectedDate.plusYears(1)
+                                "Day" -> state.selectedDate.plusDays(1)
+                                "Week" -> state.selectedDate.plusWeeks(1)
+                                else -> state.selectedDate.plusMonths(1)
+                            }
+                            onDateChange(newDate)
+                        },
+                        onDateClick = { showDatePicker = true }
+                    )
+                }
+            }
+
             // Time Filter Tabs
             item {
                 SecondaryTabRow(
-                    selectedTabIndex = selectedTab,
+                    selectedTabIndex = selectedTabIndex,
                     containerColor = Color.Transparent,
                     divider = {},
                     indicator = {
-                        // Fixed the indicator logic for modern Material 3 SecondaryTabRow
-                        // Use Modifier.tabIndicatorOffset directly within TabIndicatorScope
                         TabRowDefaults.SecondaryIndicator(
-                            modifier = Modifier.tabIndicatorOffset(selectedTab),
+                            modifier = Modifier.tabIndicatorOffset(selectedTabIndex),
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
                 ) {
                     tabs.forEachIndexed { index, title ->
                         Tab(
-                            selected = selectedTab == index,
-                            onClick = { selectedTab = index },
+                            selected = selectedTabIndex == index,
+                            onClick = { onFilterChange(title) },
                             text = {
                                 Text(
                                     text = title,
                                     style = MaterialTheme.typography.titleSmall.copy(
-                                        fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Medium
+                                        fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Medium
                                     )
                                 )
                             }
@@ -122,17 +214,11 @@ fun AnalysisScreen() {
                                     )
                                 )
                         ) {
-                            // Decorative Canvas
                             Canvas(modifier = Modifier.fillMaxSize()) {
                                 drawCircle(
                                     color = Color.White.copy(alpha = 0.15f),
                                     radius = size.minDimension * 0.6f,
                                     center = Offset(size.width * 0.95f, size.height * 0.15f)
-                                )
-                                drawCircle(
-                                    color = Color.White.copy(alpha = 0.1f),
-                                    radius = size.minDimension * 0.4f,
-                                    center = Offset(size.width * 0.05f, size.height * 0.85f)
                                 )
                             }
 
@@ -160,7 +246,7 @@ fun AnalysisScreen() {
                                         )
                                     }
                                     Text(
-                                        "Rs. 24,500.00",
+                                        "Rs. ${state.totalSavings}",
                                         color = Color.White,
                                         style = MaterialTheme.typography.displayMedium.copy(
                                             fontWeight = FontWeight.Black,
@@ -176,20 +262,20 @@ fun AnalysisScreen() {
                                         verticalAlignment = Alignment.Bottom
                                     ) {
                                         Text(
-                                            "Monthly Savings Goal",
+                                            "Savings Goal Progress",
                                             color = Color.White.copy(alpha = 0.9f),
                                             style = MaterialTheme.typography.bodySmall,
                                             fontWeight = FontWeight.Bold
                                         )
                                         Text(
-                                            "49%",
+                                            "${(state.savingsGoalProgress * 100).toInt()}%",
                                             color = Color.White,
                                             style = MaterialTheme.typography.titleSmall,
                                             fontWeight = FontWeight.Black
                                         )
                                     }
                                     LinearProgressIndicator(
-                                        progress = { 0.49f },
+                                        progress = { state.savingsGoalProgress },
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .height(10.dp)
@@ -205,88 +291,41 @@ fun AnalysisScreen() {
                 }
             }
 
-            // AI Smart Insights
-            item {
-                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                    Text(
-                        "Smart Insights",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 22.sp
-                        ),
-                        modifier = Modifier.padding(start = 8.dp, bottom = 16.dp)
-                    )
-                    
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        PremiumInsightCard(
-                            icon = Icons.Rounded.AutoAwesome,
-                            title = "High Potential Saving",
-                            description = "Based on your spending, switching your internet plan could save you Rs. 450 monthly.",
-                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f),
-                            accentColor = MaterialTheme.colorScheme.primary
-                        )
-                        PremiumInsightCard(
-                            icon = Icons.Rounded.WarningAmber,
-                            title = "Budget Overrun Alert",
-                            description = "Your 'Entertainment' category is 15% above your set limit for this month.",
-                            containerColor = Color(0xFFFFF3E0),
-                            accentColor = Color(0xFFE65100)
-                        )
-                        PremiumInsightCard(
-                            icon = Icons.Rounded.Insights,
-                            title = "Spending Habit",
-                            description = "Most of your expenses occur on Friday nights. Consider a weekly budget review.",
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.35f),
-                            accentColor = MaterialTheme.colorScheme.secondary
-                        )
+            // Spending Breakdown (Donut Chart)
+            if (state.spendingBreakdown.isNotEmpty()) {
+                item {
+                    AnalysisCard(title = "Spending Breakdown") {
+                        ModernDonutChart(categories = state.spendingBreakdown)
                     }
                 }
             }
 
-            // Spending Breakdown (Donut Chart)
-            item {
-                AnalysisCard(title = "Spending Breakdown") {
-                    ModernDonutChart(
-                        categories = listOf(
-                            CategorySpend("Food", 8500f, Color(0xFF6366F1)),
-                            CategorySpend("Transport", 4200f, Color(0xFF10B981)),
-                            CategorySpend("Shopping", 12000f, Color(0xFFF43F5E)),
-                            CategorySpend("Rent", 15000f, Color(0xFFF59E0B))
-                        )
-                    )
-                }
-            }
-
-            // Monthly Trend (Bar Chart)
-            item {
-                AnalysisCard(title = "Monthly Cash Flow") {
-                    ModernBarChart(
-                        data = listOf(0.4f, 0.6f, 0.3f, 0.8f, 0.5f, 0.9f, 0.7f),
-                        labels = listOf("Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar")
-                    )
+            // Trend (Bar Chart)
+            if (state.cashFlowData.isNotEmpty()) {
+                item {
+                    AnalysisCard(title = "Expense Trend") {
+                        ModernBarChart(data = state.cashFlowData)
+                    }
                 }
             }
 
             // Category Performance
-            item {
-                Column {
-                    Text(
-                        "Category Performance",
-                        modifier = Modifier.padding(horizontal = 24.dp),
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    LazyRow(
-                        contentPadding = PaddingValues(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(listOf(
-                            CategoryItemData("Groceries", "Rs. 4.5k", Icons.Default.ShoppingCart, Color(0xFF4CAF50)),
-                            CategoryItemData("Electronics", "Rs. 12k", Icons.Default.Bolt, Color(0xFFFFC107)),
-                            CategoryItemData("Travel", "Rs. 2.1k", Icons.Default.Flight, Color(0xFF2196F3)),
-                            CategoryItemData("Health", "Rs. 1.5k", Icons.Default.Favorite, Color(0xFFE91E63))
-                        )) { category ->
-                            ModernCategoryCard(category)
+            if (state.categoryPerformance.isNotEmpty()) {
+                item {
+                    Column {
+                        Text(
+                            "Category Performance",
+                            modifier = Modifier.padding(horizontal = 24.dp),
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        LazyRow(
+                            contentPadding = PaddingValues(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(state.categoryPerformance) { category ->
+                                ModernCategoryCard(category)
+                            }
                         }
                     }
                 }
@@ -327,58 +366,6 @@ fun AnalysisCard(
 }
 
 @Composable
-fun PremiumInsightCard(
-    icon: ImageVector,
-    title: String,
-    description: String,
-    containerColor: Color,
-    accentColor: Color
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
-        color = containerColor,
-        border = androidx.compose.foundation.BorderStroke(1.dp, accentColor.copy(alpha = 0.2f))
-    ) {
-        Row(
-            modifier = Modifier.padding(20.dp),
-            verticalAlignment = Alignment.Top
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(accentColor.copy(alpha = 0.15f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = accentColor,
-                    modifier = Modifier.size(26.dp)
-                )
-            }
-            Spacer(modifier = Modifier.width(16.dp))
-            Column {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = accentColor
-                    )
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
-
-@Composable
 fun ModernDonutChart(categories: List<CategorySpend>) {
     val total = categories.sumOf { it.amount.toDouble() }.toFloat()
     
@@ -391,7 +378,7 @@ fun ModernDonutChart(categories: List<CategorySpend>) {
             Canvas(modifier = Modifier.fillMaxSize()) {
                 var startAngle = -90f
                 categories.forEach { category ->
-                    val sweepAngle = (category.amount / total) * 360f
+                    val sweepAngle = if (total > 0) (category.amount / total) * 360f else 0f
                     drawArc(
                         color = category.color,
                         startAngle = startAngle,
@@ -403,24 +390,32 @@ fun ModernDonutChart(categories: List<CategorySpend>) {
                 }
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("Total", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Total Spent", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(
-                    "Rs. ${total.toInt() / 1000}k",
+                    "Rs. ${total.toInt()}",
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Black)
                 )
             }
         }
         
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(modifier = Modifier.weight(1f).padding(start = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             categories.forEach { category ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(modifier = Modifier.size(12.dp).clip(CircleShape).background(category.color))
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text(
-                        text = category.name,
-                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(category.color))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            text = category.name,
+                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1
+                        )
+                        Text(
+                            text = "Rs. ${category.amount.toInt()}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
                 }
             }
         }
@@ -428,24 +423,30 @@ fun ModernDonutChart(categories: List<CategorySpend>) {
 }
 
 @Composable
-fun ModernBarChart(data: List<Float>, labels: List<String>) {
+fun ModernBarChart(data: List<CashFlowUiModel>) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(160.dp),
+            .height(200.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Bottom
     ) {
-        data.forEachIndexed { index, value ->
+        data.forEachIndexed { index, item ->
             val heightState by animateFloatAsState(
-                targetValue = value,
+                targetValue = item.value,
                 animationSpec = tween(durationMillis = 1000, delayMillis = index * 100),
                 label = "barHeight"
             )
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
+                Text(
+                    text = item.amount,
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
                 Box(
                     modifier = Modifier
-                        .width(16.dp)
+                        .width(20.dp)
                         .fillMaxHeight(heightState)
                         .clip(RoundedCornerShape(12.dp))
                         .background(
@@ -459,7 +460,7 @@ fun ModernBarChart(data: List<Float>, labels: List<String>) {
                 )
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
-                    text = labels[index],
+                    text = item.label,
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -469,11 +470,11 @@ fun ModernBarChart(data: List<Float>, labels: List<String>) {
 }
 
 @Composable
-fun ModernCategoryCard(data: CategoryItemData) {
+fun ModernCategoryCard(data: CategoryPerformanceUiModel) {
     Surface(
         modifier = Modifier
             .width(140.dp)
-            .height(150.dp),
+            .height(120.dp),
         shape = RoundedCornerShape(28.dp),
         color = data.color.copy(alpha = 0.08f),
         border = androidx.compose.foundation.BorderStroke(1.dp, data.color.copy(alpha = 0.15f))
@@ -484,15 +485,15 @@ fun ModernCategoryCard(data: CategoryItemData) {
         ) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                    .size(32.dp)
+                    .clip(RoundedCornerShape(10.dp))
                     .background(data.color.copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(data.icon, contentDescription = null, tint = data.color, modifier = Modifier.size(22.dp))
+                Text(data.name.take(1), color = data.color, fontWeight = FontWeight.Bold)
             }
             Column {
-                Text(data.name, style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.ExtraBold))
+                Text(data.name, style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.ExtraBold), maxLines = 1)
                 Text(data.amount, style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
@@ -500,10 +501,3 @@ fun ModernCategoryCard(data: CategoryItemData) {
 }
 
 data class CategorySpend(val name: String, val amount: Float, val color: Color)
-data class CategoryItemData(val name: String, val amount: String, val icon: ImageVector, val color: Color)
-
-@Preview(showBackground = true)
-@Composable
-fun AnalysisScreenPreview() {
-    AnalysisScreen()
-}

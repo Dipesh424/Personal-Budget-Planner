@@ -33,7 +33,7 @@ data class CategoryWithBudget(
     @Embedded val categoryWithIcon: CategoryWithIcon,
     val budgetId : Int,
     val budgetAmount: Double,
-//    val spentAmount: Double,
+    val spentAmount: Double,
     val month: Int,
     val year: Int
 )

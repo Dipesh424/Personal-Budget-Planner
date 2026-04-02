@@ -53,7 +53,7 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.tracker.personalbudgetplanner.navigation.BottomNavKey
 import com.tracker.personalbudgetplanner.navigation.Routes
-import com.tracker.personalbudgetplanner.ui.analysis.presentation.AnalysisScreen
+import com.tracker.personalbudgetplanner.ui.analysis.presentation.AnalysisScreenRoot
 import com.tracker.personalbudgetplanner.ui.budget.presentation.BudgetScreenRoot
 import com.tracker.personalbudgetplanner.ui.budget.presentation.BudgetViewModel
 import com.tracker.personalbudgetplanner.ui.category.presentation.CategoriesScreenRoot
@@ -64,6 +64,7 @@ import com.tracker.personalbudgetplanner.ui.dashboard.presentation.RecentActivit
 import com.tracker.personalbudgetplanner.ui.settings.presentation.ImportStatementDialog
 import com.tracker.personalbudgetplanner.ui.settings.presentation.SettingsScreen
 import com.tracker.personalbudgetplanner.ui.settings.presentation.SuccessImportDialog
+import com.tracker.personalbudgetplanner.ui.transaction.presentation.TransactionScreenRoot
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -235,7 +236,7 @@ fun MainScreen() {
                     })
                 }
                 entry<BottomNavKey.Analysis> {
-                    AnalysisScreen()
+                    AnalysisScreenRoot()
                 }
                 entry<BottomNavKey.Budget> {
                     val viewModel = koinViewModel<BudgetViewModel>()
@@ -253,6 +254,12 @@ fun MainScreen() {
 
                 entry<Routes.RecentActivity> {
                     RecentActivityScreen(onBack = {
+                        onHandleBackPressed()
+                    })
+                }
+
+                entry<Routes.AddTransaction> {
+                    TransactionScreenRoot(onBack = {
                         onHandleBackPressed()
                     })
                 }
@@ -285,7 +292,7 @@ fun MainScreen() {
                         subtitle = "Enter transaction details manually",
                         onClick = {
                             showAddOptionsSheet = false
-                            // TODO: Navigate to manual add screen
+                            addToBackStack(Routes.AddTransaction)
                         }
                     )
 
