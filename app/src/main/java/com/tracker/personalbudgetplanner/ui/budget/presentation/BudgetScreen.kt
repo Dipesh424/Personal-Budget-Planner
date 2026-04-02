@@ -83,24 +83,17 @@ import java.util.Locale
 @Composable
 fun BudgetScreenRoot(viewModel: BudgetViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    var categoryForAddBudget by remember { mutableStateOf<Categories?>(null) }
-    var categoryToEditForBudget by remember { mutableStateOf<BudgetCategories?>(null) }
-    var budgetToDelete by remember { mutableStateOf<BudgetCategories?>(null) }
 
     LaunchedEffect(state.currentDate) {
         viewModel.getBudgetedAndUnBudgetedCategories(
-            month = state.currentDate.monthValue,
-            year = state.currentDate.year
+            month = state.currentDate.monthValue, year = state.currentDate.year
         )
     }
 
-    budgetToDelete?.let { budget ->
+    state.budgetToDelete?.let { budget ->
         AppAlertDialog(
-            onDismissRequest = { budgetToDelete = null },
-            onConfirm = {
-                viewModel.deleteBudgetById(budget.budgetId ?: -1)
-                budgetToDelete = null
-            },
+            onDismissRequest = { viewModel.onAction(BudgetAction.OnDismissDialogs) },
+            onConfirm = { viewModel.onAction(BudgetAction.OnDeleteConfirm) },
             title = stringResource(R.string.remove_budget),
             description = stringResource(R.string.budget_remove_confirmation, budget.category.name),
             confirmText = stringResource(R.string.remove),
@@ -109,49 +102,27 @@ fun BudgetScreenRoot(viewModel: BudgetViewModel = koinViewModel()) {
         )
     }
 
-    if (categoryForAddBudget != null || categoryToEditForBudget != null) {
+    if (state.categoryForAddBudget != null || state.categoryToEditForBudget != null) {
         SetBudgetBottomSheet(
-            category = categoryForAddBudget,
-            budgetCategories = categoryToEditForBudget,
+            category = state.categoryForAddBudget,
+            budgetCategories = state.categoryToEditForBudget,
             currentDate = state.currentDate,
-            onDismiss = {
-                categoryForAddBudget = null
-                categoryToEditForBudget = null
-            }, onSave = { budget ->
-                viewModel.upsertBudget(budget)
-                categoryForAddBudget = null
-                categoryToEditForBudget = null
-            }
+            onDismiss = { viewModel.onAction(BudgetAction.OnDismissDialogs) },
+            onSave = { budget -> viewModel.onAction(BudgetAction.OnSaveBudget(budget)) }
         )
     }
 
     BudgetScreen(
-        state = state,
-        onPreviousMonth = {
-            viewModel.onMoveMonth(-1)
-        },
-        onNextMonth = {
-            viewModel.onMoveMonth(1)
-        },
-        onSetBudget = { categories ->
-            categoryForAddBudget = categories
-        },
-        onEditBudget = { categories ->
-            categoryToEditForBudget = categories
-        }, onDeleteClick = { budget ->
-            budgetToDelete = budget
-        })
-
+        state = state, onAction = {
+            viewModel.onAction(it)
+        }
+    )
 }
 
 @Composable
 fun BudgetScreen(
     state: BudgetState,
-    onPreviousMonth: () -> Unit,
-    onNextMonth: () -> Unit,
-    onSetBudget: (Categories) -> Unit,
-    onEditBudget: (BudgetCategories) -> Unit,
-    onDeleteClick: (BudgetCategories) -> Unit
+    onAction: (BudgetAction) -> Unit
 ) {
     val totalBudget = state.budgetedCategories.sumOf { it.budgetAmount }
     val totalSpent = state.budgetedCategories.sumOf { it.spentAmount }
@@ -179,8 +150,8 @@ fun BudgetScreen(
         ) {
             MonthSelector(
                 currentDate = state.currentDate,
-                onPreviousMonth = onPreviousMonth,
-                onNextMonth = onNextMonth
+                onPreviousMonth = { onAction(BudgetAction.OnPreviousMonth) },
+                onNextMonth = { onAction(BudgetAction.OnNextMonth) }
             )
 
             if (state.isLoading) {
@@ -200,9 +171,9 @@ fun BudgetScreen(
                 BudgetList(
                     budgetedCategories = state.budgetedCategories,
                     unbudgetedCategories = state.unbudgetedCategories,
-                    onSetBudget = onSetBudget,
-                    onEditBudget = onEditBudget,
-                    onDeleteClick = onDeleteClick
+                    onSetBudget = { onAction(BudgetAction.OnSetBudgetClick(it)) },
+                    onEditBudget = { onAction(BudgetAction.OnEditBudgetClick(it)) },
+                    onDeleteClick = { onAction(BudgetAction.OnDeleteClick(it)) }
                 )
             }
         }
@@ -345,8 +316,7 @@ fun BudgetRow(
         Column(modifier = Modifier.padding(16.dp)) {
             // Header: Icon, Name, and Menu
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
+                verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()
             ) {
                 Surface(
                     shape = CircleShape,
@@ -381,43 +351,32 @@ fun BudgetRow(
                     }
 
                     DropdownMenu(
-                        expanded = showMenu,
-                        onDismissRequest = { showMenu = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("Update Limit") },
-                            leadingIcon = {
-                                Icon(
-                                    Icons.Default.Edit,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            },
-                            onClick = {
-                                showMenu = false
-                                onEditClick(item)
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    "Remove Budget",
-                                    color = MaterialTheme.colorScheme.error
-                                )
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    Icons.Default.Delete,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            },
-                            onClick = {
-                                showMenu = false
-                                onDeleteClick(item)
-                            }
-                        )
+                        expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                        DropdownMenuItem(text = { Text("Update Limit") }, leadingIcon = {
+                            Icon(
+                                Icons.Default.Edit,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }, onClick = {
+                            showMenu = false
+                            onEditClick(item)
+                        })
+                        DropdownMenuItem(text = {
+                            Text(
+                                "Remove Budget", color = MaterialTheme.colorScheme.error
+                            )
+                        }, leadingIcon = {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }, onClick = {
+                            showMenu = false
+                            onDeleteClick(item)
+                        })
                     }
                 }
             }
@@ -426,8 +385,7 @@ fun BudgetRow(
 
             // Three-Column Stats Section
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 BudgetStatColumn(
                     label = "Limit",
@@ -464,8 +422,7 @@ fun BudgetRow(
                         .background(
                             brush = Brush.horizontalGradient(
                                 colors = if (isOverspent) listOf(
-                                    MaterialTheme.colorScheme.error,
-                                    Color(0xFFFF8A80)
+                                    MaterialTheme.colorScheme.error, Color(0xFFFF8A80)
                                 )
                                 else listOf(
                                     MaterialTheme.colorScheme.primary,
@@ -524,8 +481,7 @@ fun UnbudgetedRow(category: Categories, onSetBudget: (Categories) -> Unit) {
             }, shape = RoundedCornerShape(12.dp)
         ) {
             Text(
-                stringResource(R.string.set_budget),
-                style = MaterialTheme.typography.labelMedium
+                stringResource(R.string.set_budget), style = MaterialTheme.typography.labelMedium
             )
         }
     }
@@ -654,8 +610,7 @@ fun SetBudgetBottomSheet(
                 placeholder = { Text(stringResource(R.string._0_00)) },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Decimal,
-                    imeAction = ImeAction.Done
+                    keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done
                 ),
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp)
@@ -706,10 +661,7 @@ fun BudgetScreenPreview() {
     PersonalBudgetPlannerTheme() {
         BudgetScreen(
             state = BudgetState(),
-            onPreviousMonth = {},
-            onNextMonth = {},
-            onSetBudget = {},
-            onEditBudget = {}, onDeleteClick = {})
+            onAction = {})
     }
 }
 

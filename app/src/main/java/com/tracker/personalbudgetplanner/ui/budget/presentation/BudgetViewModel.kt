@@ -64,4 +64,36 @@ class BudgetViewModel(private val repository: BudgetRepository) : ViewModel() {
             repository.deleteBudgetById(id)
         }
     }
+
+    fun onAction(action: BudgetAction) {
+        when (action) {
+            is BudgetAction.OnNextMonth -> onMoveMonth(1)
+            is BudgetAction.OnPreviousMonth -> onMoveMonth(-1)
+            is BudgetAction.OnSetBudgetClick -> {
+                _state.update { it.copy(categoryForAddBudget = action.category) }
+            }
+            is BudgetAction.OnEditBudgetClick -> {
+                _state.update { it.copy(categoryToEditForBudget = action.budget) }
+            }
+            is BudgetAction.OnDeleteClick -> {
+                _state.update { it.copy(budgetToDelete = action.budget) }
+            }
+            is BudgetAction.OnDismissDialogs -> {
+                _state.update { it.copy(
+                    categoryForAddBudget = null,
+                    categoryToEditForBudget = null,
+                    budgetToDelete = null
+                )}
+            }
+            is BudgetAction.OnDeleteConfirm -> {
+                val id = _state.value.budgetToDelete?.budgetId ?: return
+                deleteBudgetById(id)
+                onAction(BudgetAction.OnDismissDialogs)
+            }
+            is BudgetAction.OnSaveBudget -> {
+                upsertBudget(action.budget)
+                onAction(BudgetAction.OnDismissDialogs)
+            }
+        }
+    }
 }
