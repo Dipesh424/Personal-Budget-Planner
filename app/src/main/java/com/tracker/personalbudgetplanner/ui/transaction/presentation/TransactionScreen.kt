@@ -1,6 +1,10 @@
 package com.tracker.personalbudgetplanner.ui.transaction.presentation
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -10,12 +14,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowBackIos
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.rounded.Description
+import androidx.compose.material.icons.rounded.Payments
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -63,34 +70,65 @@ fun TransactionScreen(
     onTypeChange: (String) -> Unit,
     onSave: () -> Unit
 ) {
+    val isExpense = state.transactionType == DbConstants.category_expense
+    val themeColor = if (isExpense) Color(0xFFE53935) else Color(0xFF43A047)
+    
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Add Transaction", fontWeight = FontWeight.Bold) },
+            TopAppBar(
+                title = { 
+                    Text(
+                        "Add Transaction", 
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = (-0.5).sp
+                        )
+                    ) 
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBackIos,
+                            contentDescription = "Back",
+                            modifier = Modifier.size(18.dp)
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent
                 )
             )
         },
         bottomBar = {
-            Button(
-                onClick = onSave,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp),
-                enabled = !state.isLoading
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 0.dp
             ) {
-                if (state.isLoading) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
-                } else {
-                    Text("Save Transaction", style = MaterialTheme.typography.titleMedium)
+                Button(
+                    onClick = onSave,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(horizontal = 24.dp, vertical = 12.dp)
+                        .height(60.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = themeColor,
+                        contentColor = Color.White
+                    ),
+                    enabled = !state.isLoading,
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+                ) {
+                    if (state.isLoading) {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                    } else {
+                        Text(
+                            "Save Transaction", 
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Black)
+                        )
+                    }
                 }
             }
         }
@@ -99,62 +137,89 @@ fun TransactionScreen(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+                .padding(horizontal = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // Type Selector (Income / Expense)
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Transaction Type Toggle
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
+                    .height(56.dp)
+                    .clip(RoundedCornerShape(16.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                     .padding(4.dp)
             ) {
                 TransactionTypeTab(
                     label = "Expense",
-                    isSelected = state.transactionType == DbConstants.category_expense,
+                    isSelected = isExpense,
                     onClick = { onTypeChange(DbConstants.category_expense) },
                     modifier = Modifier.weight(1f),
                     selectedColor = Color(0xFFE53935)
                 )
                 TransactionTypeTab(
                     label = "Income",
-                    isSelected = state.transactionType == DbConstants.category_income,
+                    isSelected = !isExpense,
                     onClick = { onTypeChange(DbConstants.category_income) },
                     modifier = Modifier.weight(1f),
                     selectedColor = Color(0xFF43A047)
                 )
             }
 
-            // Amount Input
+            // Amount Input Card
             Column {
-                Text(
-                    "Amount",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Rounded.Payments,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = themeColor
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        "Amount",
+                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = state.amount,
                     onValueChange = onAmountChange,
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("0.00") },
-                    prefix = { Text("Rs. ") },
+                    placeholder = { Text("0.00", modifier = Modifier.alpha(0.3f)) },
+                    prefix = { 
+                        Text(
+                            "Rs. ", 
+                            style = MaterialTheme.typography.headlineMedium.copy(
+                                fontWeight = FontWeight.Black,
+                                color = themeColor
+                            )
+                        ) 
+                    },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(20.dp),
                     singleLine = true,
-                    textStyle = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = themeColor,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                    ),
+                    textStyle = MaterialTheme.typography.displaySmall.copy(
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = (-1).sp
+                    )
                 )
             }
 
             // Category Selection
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    "Category",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    "Select Category",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.ExtraBold),
+                    color = MaterialTheme.colorScheme.onSurface
                 )
+                Spacer(modifier = Modifier.height(12.dp))
                 
                 if (state.categories.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -164,13 +229,15 @@ fun TransactionScreen(
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(3),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(bottom = 16.dp)
                     ) {
                         items(state.categories) { category ->
                             CategorySelectionItem(
                                 category = category,
                                 isSelected = state.selectedCategory?.id == category.id,
-                                onClick = { onCategorySelect(category) }
+                                onClick = { onCategorySelect(category) },
+                                activeColor = themeColor
                             )
                         }
                     }
@@ -179,30 +246,50 @@ fun TransactionScreen(
 
             // Note Input
             Column {
-                Text(
-                    "Note (Optional)",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Rounded.Description,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        "Add Note",
+                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = state.note,
                     onValueChange = onNoteChange,
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Enter a note...") },
-                    shape = RoundedCornerShape(16.dp),
-                    maxLines = 3
+                    placeholder = { Text("What was this for?", modifier = Modifier.alpha(0.5f)) },
+                    shape = RoundedCornerShape(20.dp),
+                    maxLines = 2,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = themeColor,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                    )
                 )
+                Spacer(modifier = Modifier.height(16.dp))
             }
 
             if (state.error != null) {
-                Text(
-                    text = state.error,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center
-                )
+                Surface(
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = state.error,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(8.dp),
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
         }
     }
@@ -216,16 +303,31 @@ fun TransactionTypeTab(
     modifier: Modifier = Modifier,
     selectedColor: Color
 ) {
+    val backgroundColor by animateColorAsState(
+        targetValue = if (isSelected) selectedColor else Color.Transparent,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy),
+        label = "bg"
+    )
+    val contentColor by animateColorAsState(
+        targetValue = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+        label = "content"
+    )
+
     Surface(
         modifier = modifier
-            .height(40.dp)
+            .fillMaxHeight()
+            .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(8.dp),
-        color = if (isSelected) selectedColor else Color.Transparent,
-        contentColor = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+        color = backgroundColor,
+        contentColor = contentColor
     ) {
         Box(contentAlignment = Alignment.Center) {
-            Text(label, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal)
+            Text(
+                text = label, 
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontWeight = if (isSelected) FontWeight.Black else FontWeight.Medium
+                )
+            )
         }
     }
 }
@@ -234,15 +336,18 @@ fun TransactionTypeTab(
 fun CategorySelectionItem(
     category: Categories,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    activeColor: Color
 ) {
-    val backgroundColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-    val contentColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+    val containerColor = if (isSelected) activeColor.copy(alpha = 0.1f) else Color.Transparent
+    val borderColor = if (isSelected) activeColor else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
 
     Column(
         modifier = Modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(backgroundColor)
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(containerColor)
+            .border(1.5.dp, borderColor, RoundedCornerShape(20.dp))
             .clickable(onClick = onClick)
             .padding(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -250,30 +355,40 @@ fun CategorySelectionItem(
     ) {
         Box(
             modifier = Modifier
-                .size(40.dp)
+                .size(44.dp)
                 .clip(CircleShape)
-                .background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else Color.Transparent),
+                .background(if (isSelected) activeColor else MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = category.name.take(1),
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = contentColor
+                text = category.name.take(1).uppercase(),
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Black),
+                color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
             )
+            
             if (isSelected) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp).align(Alignment.BottomEnd),
-                    tint = MaterialTheme.colorScheme.primary
-                )
+                Surface(
+                    modifier = Modifier
+                        .size(18.dp)
+                        .align(Alignment.BottomEnd),
+                    shape = CircleShape,
+                    color = Color.White,
+                    tonalElevation = 2.dp
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        modifier = Modifier.padding(2.dp),
+                        tint = activeColor
+                    )
+                }
             }
         }
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = category.name,
-            style = MaterialTheme.typography.labelSmall,
-            color = contentColor,
+            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+            color = if (isSelected) activeColor else MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
             textAlign = TextAlign.Center
         )

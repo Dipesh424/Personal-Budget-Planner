@@ -4,39 +4,17 @@ import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.UploadFile
-import androidx.compose.material3.BottomSheetDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarDefaults
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -61,9 +39,7 @@ import com.tracker.personalbudgetplanner.ui.category.presentation.CategoriesView
 import com.tracker.personalbudgetplanner.ui.dashboard.presentation.AddOptionItem
 import com.tracker.personalbudgetplanner.ui.dashboard.presentation.DashboardScreen
 import com.tracker.personalbudgetplanner.ui.dashboard.presentation.RecentActivityScreen
-import com.tracker.personalbudgetplanner.ui.settings.presentation.ImportStatementDialog
 import com.tracker.personalbudgetplanner.ui.settings.presentation.SettingsScreen
-import com.tracker.personalbudgetplanner.ui.settings.presentation.SuccessImportDialog
 import com.tracker.personalbudgetplanner.ui.transaction.presentation.TransactionScreenRoot
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
@@ -90,19 +66,9 @@ fun MainScreen() {
 
     // State for FAB Options
     var showAddOptionsSheet by remember { mutableStateOf(false) }
-    var showImportDialog by remember { mutableStateOf(false) }
-    var showSuccessDialog by remember { mutableStateOf(false) }
-    var selectedFileUri by remember { mutableStateOf<Uri?>(null) }
     
     val scope = rememberCoroutineScope()
-    val sheetState = rememberModalBottomSheetState()
-
-    // File picker launcher
-    val filePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        selectedFileUri = uri
-    }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val addToBackStack: (NavKey) -> Unit = {
         when (currentKey) {
@@ -205,18 +171,20 @@ fun MainScreen() {
             }
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showAddOptionsSheet = true },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                shape = RoundedCornerShape(16.dp),
-                elevation = FloatingActionButtonDefaults.elevation(8.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Add Expenses",
-                    modifier = Modifier.size(28.dp)
-                )
+            if (currentBackStack.lastOrNull() != Routes.AddTransaction) {
+                FloatingActionButton(
+                    onClick = { showAddOptionsSheet = true },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = FloatingActionButtonDefaults.elevation(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add Expenses",
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
             }
         }
     ) { innerPadding ->
@@ -271,73 +239,65 @@ fun MainScreen() {
                 onDismissRequest = { showAddOptionsSheet = false },
                 sheetState = sheetState,
                 containerColor = MaterialTheme.colorScheme.surface,
-                tonalElevation = 8.dp,
-                dragHandle = { BottomSheetDefaults.DragHandle() }
+                tonalElevation = 0.dp,
+                dragHandle = {
+                    BottomSheetDefaults.DragHandle(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)
+                    )
+                },
+                shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 32.dp, top = 8.dp, start = 16.dp, end = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                        .padding(bottom = 60.dp, top = 8.dp, start = 24.dp, end = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    Surface(
+                        modifier = Modifier.size(72.dp),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null,
+                            modifier = Modifier.padding(20.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(20.dp))
+
                     Text(
-                        text = "Add Transaction",
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                        modifier = Modifier.padding(bottom = 8.dp, start = 8.dp)
+                        text = "New Transaction",
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = (-0.5).sp
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    
+                    Text(
+                        text = "Choose how you want to track",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 32.dp)
                     )
 
                     AddOptionItem(
                         icon = Icons.Default.Edit,
-                        title = "Add manually",
-                        subtitle = "Enter transaction details manually",
-                        onClick = {
-                            showAddOptionsSheet = false
-                            addToBackStack(Routes.AddTransaction)
-                        }
-                    )
-
-                    AddOptionItem(
-                        icon = Icons.Default.UploadFile,
-                        title = "Upload your Statement",
-                        subtitle = "Import from Excel file",
+                        title = "Add your Income and Expenses",
+                        subtitle = "Manually record your daily financial activity",
                         onClick = {
                             scope.launch { sheetState.hide() }.invokeOnCompletion {
-                                if (!sheetState.isVisible) {
-                                    showAddOptionsSheet = false
-                                    showImportDialog = true
-                                }
+                                showAddOptionsSheet = false
+                                addToBackStack(Routes.AddTransaction)
                             }
                         }
                     )
                 }
             }
         }
-    }
-
-    if (showImportDialog) {
-        ImportStatementDialog(
-            selectedFileUri = selectedFileUri,
-            onDismiss = {
-                showImportDialog = false
-                selectedFileUri = null
-            },
-            onPickFile = {
-                filePickerLauncher.launch("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-            },
-            onUpload = {
-                if (selectedFileUri != null) {
-                    showImportDialog = false
-                    showSuccessDialog = true
-                    selectedFileUri = null
-                }
-            }
-        )
-    }
-
-    if (showSuccessDialog) {
-        SuccessImportDialog(
-            onDismiss = { showSuccessDialog = false }
-        )
     }
 
     BackHandler(enabled = true) {
