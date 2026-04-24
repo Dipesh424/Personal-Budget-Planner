@@ -1,9 +1,11 @@
 package com.tracker.personalbudgetplanner.ui.budget.presentation
 
+import androidx.compose.runtime.Immutable
 import com.tracker.personalbudgetplanner.ui.budget.domain.BudgetCategories
 import com.tracker.personalbudgetplanner.ui.category.domain.Categories
 import java.time.LocalDate
 
+@Immutable
 data class BudgetState(
     val currentDate: LocalDate = LocalDate.now(),
     val totalBudget: Double = 0.0,

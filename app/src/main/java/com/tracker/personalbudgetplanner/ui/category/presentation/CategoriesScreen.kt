@@ -179,7 +179,10 @@ fun CategoriesScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     contentPadding = PaddingValues(bottom = 100.dp) // Space for floating buttons
                 ) {
-                    items(categoryState.categories) { item ->
+                    items(
+                        items = categoryState.categories,
+                        key = { it.id ?: it.name }
+                    ) { item ->
                         CategoryManagementRow(
                             category = item,
                             onEdit = { onAction(CategoryAction.OnEditCategoryClick(item)) },
